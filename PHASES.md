@@ -47,7 +47,12 @@ file. Don't edit by hand mid-phase; let `/pm` mutate it so the log stays clean.
 - [x] **2.3** Compass + bearing arrow ⭐ Pillar 4 — passed 2026-05-25
   - Files: `src/lib/compass.ts` (iOS webkitCompassHeading + Android 360-alpha + requestPermission gesture + bearingTo geodesic), `src/hooks/{useCompass,useGeolocation}.ts`, `src/components/game/BearingArrow.tsx`, `src/screens/CompassTestScreen.tsx` (`/compass-test` DEV-only)
   - Smoke (`_smoke/phase-2-3.mjs`): synthesises DeviceOrientation events. Position 330m N of Big Ben → bearing=180°. alpha=0 → heading=0° (arrow 180°); alpha=270 → heading=90° (arrow 90°). Δ=-90° = correct 90° CCW rotation. bearingTo(0,0,1,1)=45°.
-- [ ] **2.4** Seeker hunt screen + radar
+- [x] **2.4** Seeker hunt screen + radar — passed 2026-05-25
+  - Files: `src/components/game/{TargetCard,Radar}.tsx`, real `SeekerHuntScreen` (replaces placeholder), presence channel wiring
+  - TargetCard: blurred photo via signed URL, sharpen power-up (blur 20→10→4→0 over 3 clicks), gold-left hint strip with one-shot reveal
+  - Radar: CSS-only grid (3 rings + crosshair), 3s sweep, blaze ping, distance + temp (BURNING/HOT/WARM/COLD/FROZEN per spec §12.8), BearingArrow overlay
+  - Presence: `presence:session:<id>` channel; seeker .track({ distance_meters }) — distance only, NO raw coords. Store flag `lastTrackedDistance` for diagnostic.
+  - Smoke (`_smoke/phase-2-4.mjs`, non-headless): hider sets trap → seeker view loads, blurred photo via signed URL, sharpen×3 → blur 0/disabled, hint reveals, distance falls when GPS moves closer, presence track succeeds.
 - [ ] **2.5** Hybrid submission ⭐ Pillar 1
 
 ## Day 3 — Cloud, scoring, polish
@@ -72,3 +77,4 @@ file. Don't edit by hand mid-phase; let `/pm` mutate it so the log stays clean.
 - **2026-05-25** Phase 2.1 PASS — startGame()/GameRouter/RoleRevealScreen; 3-browser smoke: roles assigned correctly, View Transition lobby→game works (screenshot caught mid-morph)
 - **2026-05-25** Phase 2.2 PASS — Pillar 1 wired into gameplay; setTrap() persists embedding (512 floats, |v|=1.0) + photo + GPS + difficulty. Migration 0007 atomic create_session_with_host RPC. Realtime SUBSCRIBED re-fetch race fix. Supabase anon rate limit bumped to 200/hr to support smoke runs.
 - **2026-05-25** Phase 2.3 PASS — Pillar 4 compass + bearing math; cross-platform (iOS webkitCompassHeading, Android 360-alpha, requestPermission gesture); /compass-test DEV page verifies arrowAngle = (bearing − heading + 360) mod 360 with synthesised events.
+- **2026-05-25** Phase 2.4 PASS — SeekerHuntScreen with TargetCard + Radar; sharpen 3-step blur, hint reveal, distance/temp readout, BearingArrow overlay, presence broadcasts distance only.

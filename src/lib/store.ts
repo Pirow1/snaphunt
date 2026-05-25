@@ -74,6 +74,10 @@ export type AppState = {
   setVisionLoadProgress: (pct: number) => void;
   setVisionReady: (ready: boolean) => void;
 
+  // dev/diagnostic: last distance the seeker broadcast via presence
+  lastTrackedDistance: number | null;
+  setLastTrackedDistance: (d: number | null) => void;
+
   // toast queue
   toasts: Toast[];
   pushToast: (text: string, tone?: Toast['tone']) => void;
@@ -310,6 +314,9 @@ export const useStore = create<AppState>((set) => ({
   visionReady: false,
   setVisionLoadProgress: (pct) => set({ visionLoadProgress: pct }),
   setVisionReady: (ready) => set({ visionReady: ready }),
+
+  lastTrackedDistance: null,
+  setLastTrackedDistance: (d) => set({ lastTrackedDistance: d }),
 
   toasts: [],
   pushToast: (text, tone = 'info') =>
