@@ -12,9 +12,11 @@ file. Don't edit by hand mid-phase; let `/pm` mutate it so the log stays clean.
 - [x] **1.1** Scaffolding — passed 2026-05-25 · commit `348d777`
   - Vite + React 18.3 + TS strict + Tailwind 3.4 + Router + PWA + View Transitions
   - Smoke: cream bg + grain visible, blaze/cream-2 buttons, VT API supported, nav works
-- [~] **1.2** Supabase + anonymous auth — code written 2026-05-25, awaiting migration apply
-  - Files: `supabase/migrations/0001_init.sql`, `src/lib/{types,supabase,store}.ts`, `App.tsx` auth wire
-  - Blocker: user must apply migration via Studio SQL editor and enable Anonymous sign-ins
+- [x] **1.2** Supabase + anonymous auth — passed 2026-05-25
+  - Files: `supabase/migrations/0001_init.sql`, `0002_harden_finalize_round_winner.sql`, `src/lib/{types,supabase,store}.ts`, `App.tsx` auth wire
+  - 2026-05-25 — migrations 0001 + 0002 applied to remote via Supabase MCP
+  - 2026-05-25 — Anonymous sign-ins toggled ON in Supabase dashboard
+  - Smoke (`_smoke/phase-1-2.mjs`): getSession() returns UUID, store.identity.authUserId matches, isAnonymous=true, ES256 JWT, 0 console errors
 - [ ] **1.3** Home + Create lobby
 - [ ] **1.4** Join + Lobby with realtime
 - [ ] **1.5** Vision pipeline groundwork ⭐ Pillar 1
@@ -40,3 +42,5 @@ file. Don't edit by hand mid-phase; let `/pm` mutate it so the log stays clean.
 
 - **2026-05-25** Phase 1.1 PASS — commit `348d777` (root-commit)
 - **2026-05-25** Phase 1.2 START — code written; awaiting Supabase migration apply
+- **2026-05-25** Phase 1.2 — migrations 0001 + 0002 applied via Supabase MCP; advisor warnings on `finalize_round_winner` cleared; remaining blocker: enable Anonymous sign-ins in dashboard
+- **2026-05-25** Phase 1.2 PASS — Anonymous sign-ins enabled; smoke test confirms anon UUID flows from Supabase → store

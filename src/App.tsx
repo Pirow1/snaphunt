@@ -42,8 +42,12 @@ export default function App() {
     });
 
     if (import.meta.env.DEV) {
-      const w = window as unknown as { supabase: typeof supabase };
+      const w = window as unknown as {
+        supabase: typeof supabase;
+        useStore: typeof useStore;
+      };
       w.supabase = supabase;
+      w.useStore = useStore;
     }
 
     return () => {
