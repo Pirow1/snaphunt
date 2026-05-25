@@ -403,25 +403,23 @@ export const useStore = create<AppState>((set) => ({
       .upload(path, compressed, { contentType: 'image/jpeg', upsert: true });
     await supabase.from('submissions').update({ photo_path: path }).eq('id', submissionId);
 
-    // STUB — Phase 3.1 replaces this with a real /verify-submission call.
-    setTimeout(async () => {
-      const isMatch = Math.random() > 0.5;
-      const cloudSim = isMatch ? 75 + Math.floor(Math.random() * 25) : 30 + Math.floor(Math.random() * 30);
-      const reasoning = isMatch
-        ? 'Both photos show the same object. Verified.'
-        : 'Same family, different specimen — not a match.';
-      await supabase.from('submissions').update({
-        cloud_similarity: cloudSim,
-        cloud_reasoning: reasoning,
-        is_match: isMatch && withinRange,
-        decision_source: 'cloud',
-        status: 'verified',
-        verified_at: new Date().toISOString(),
-      }).eq('id', submissionId);
-      if (isMatch && withinRange) {
-        await supabase.rpc('claim_round_match', { p_round_id: round.id });
-      }
-    }, 4000);
+    // Pillar 3 — Claude tool use via verify-submission edge function.
+    // The function owns all DB writes for this branch (cloud_similarity,
+    // cloud_reasoning, is_match, decision_source='cloud', status, verified_at)
+    // and atomically calls finalize_round_winner on match.
+    // Fire-and-await in the background so the UI can show VerifyingScreen;
+    // ResultScreen subscribes to the submission row and renders when status flips.
+    void supabase.functions
+      .invoke('verify-submission', { body: { submission_id: submissionId } })
+      .then(({ error }) => {
+        if (error) {
+          // Surface the error on the submission row so ResultScreen can react.
+          void supabase
+            .from('submissions')
+            .update({ status: 'error' })
+            .eq('id', submissionId);
+        }
+      });
 
     return { branch: 'cloud', submissionId, localSimilarity: localSim, distanceMeters: distM };
   },

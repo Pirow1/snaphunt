@@ -62,7 +62,12 @@ file. Don't edit by hand mid-phase; let `/pm` mutate it so the log stays clean.
 
 ## Day 3 — Cloud, scoring, polish
 
-- [ ] **3.1** Edge function with Claude tool use ⭐ Pillar 3
+- [x] **3.1** Edge function with Claude tool use ⭐ Pillar 3 — passed 2026-05-25
+  - Files: `supabase/functions/verify-submission/{index.ts,deno.json}`, `src/lib/store.ts` cloud branch swapped from setTimeout stub to `supabase.functions.invoke('verify-submission', ...)`
+  - Edge function deployed via Supabase MCP (`deploy_edge_function`, id `c7eec51d-9190-4a7b-88b1-8c4efa055229`, ACTIVE). Uses `claude-sonnet-4-6` with VERDICT_TOOL + `tool_choice: { type: 'tool', name: 'submit_verdict' }` — schema-guaranteed output, no JSON parsing. Image content blocks use signed-URL sources. Function owns all DB writes for cloud branch + atomic `finalize_round_winner` RPC on match.
+  - Spec departures: added CORS preflight handler (browser `functions.invoke` sends OPTIONS); imports rewritten to `jsr:`/`npm:` specifiers (Supabase MCP deploy convention vs. spec's `esm.sh`)
+  - Smoke (`_smoke/phase-3-1.mjs`, non-headless): identical photos with seeker's local thresholds clamped to `[2.0, -1.0]` to force escalation. POST 200 in 5.5s edge-fn time / 11.4s round-trip. `decision_source='cloud'`, `cloud_similarity=100`, `is_match=true`, ResultScreen shows "A Match!" + "Verified by Claude" subtitle, round.status='finished', winner set, +50 score.
+  - Sample reasoning Claude returned: *"These two images are pixel-perfect identical — the seeker didn't just find the statue, they practically found the same p[hoto]…"* (witty narrator voice per system prompt)
 - [ ] **3.2** Multi-round flow + scoring
 - [ ] **3.3** Gallery + polish
 - [ ] **3.4** Deploy
@@ -84,3 +89,4 @@ file. Don't edit by hand mid-phase; let `/pm` mutate it so the log stays clean.
 - **2026-05-25** Phase 2.3 PASS — Pillar 4 compass + bearing math; cross-platform (iOS webkitCompassHeading, Android 360-alpha, requestPermission gesture); /compass-test DEV page verifies arrowAngle = (bearing − heading + 360) mod 360 with synthesised events.
 - **2026-05-25** Phase 2.4 PASS — SeekerHuntScreen with TargetCard + Radar; sharpen 3-step blur, hint reveal, distance/temp readout, BearingArrow overlay, presence broadcasts distance only.
 - **2026-05-25** Phase 2.5 PASS — Pillar 1 hybrid submission; local_high path verified end-to-end (cosine 1.0 → instant ResultScreen, +50pts, round finished). Cloud-stub fires after 4s; Phase 3.1 will swap with real Claude tool use.
+- **2026-05-25** Phase 3.1 PASS — Pillar 3 wired; verify-submission edge function deployed, real Claude tool_use round-trip in ~5.5s, ResultScreen shows real reasoning + "Verified by Claude". Stub removed from store.ts.
