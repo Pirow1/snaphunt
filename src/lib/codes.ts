@@ -1,6 +1,10 @@
-// Join-code generation. 6 uppercase characters, excluding visually ambiguous
-// glyphs (no 0/O, 1/I, L).
-const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+// Join-code alphabet. Constrained to characters typeable on the JoinScreen
+// keypad (1-9, A, 0, DEL — see snaphunt-spec-v2.md §12.3 and the playbook).
+// The keypad rule is binding; the spec's broader "no 0/O/1/I/L" guidance
+// would generate codes with un-typeable letters (P, Y, etc.).
+//
+// 9 chars × 6 positions = 531_441 combos — plenty for hackathon scale.
+const ALPHABET = '23456789A';
 
 export function generateJoinCode(length = 6): string {
   const buf = new Uint32Array(length);
@@ -12,7 +16,7 @@ export function generateJoinCode(length = 6): string {
   return out;
 }
 
-const CODE_RE = /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{6}$/;
+const CODE_RE = /^[23456789A]{6}$/;
 
 export function isValidJoinCode(input: string): boolean {
   return CODE_RE.test(input);

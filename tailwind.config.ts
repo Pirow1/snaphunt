@@ -39,9 +39,17 @@ export default {
           '0%':   { transform: 'rotate(-3deg) scale(1)',   opacity: '1' },
           '100%': { transform: 'rotate(0deg)  scale(0.6)', opacity: '0' },
         },
-        'new-pulse': {
+        'slide-in': {
           '0%':   { transform: 'translateX(-8px)', opacity: '0' },
           '100%': { transform: 'translateX(0)',     opacity: '1' },
+        },
+        'new-pulse': {
+          '0%':   { backgroundColor: 'var(--gold)' },
+          '100%': { backgroundColor: 'var(--cream-2)' },
+        },
+        'blink': {
+          '0%, 50%':   { opacity: '1' },
+          '51%, 100%': { opacity: '0' },
         },
         'radar-sweep': {
           '0%':   { transform: 'rotate(0deg)' },
@@ -55,7 +63,9 @@ export default {
       animation: {
         'stamp-in':  'stamp-in 400ms cubic-bezier(0.5, -0.5, 0.3, 1.5) both',
         'stamp-out': 'stamp-out 250ms ease both',
-        'new-pulse': 'new-pulse 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both',
+        'slide-in':  'slide-in 350ms ease both',
+        'new-pulse': 'new-pulse 1s ease both',
+        'blink':     'blink 1s infinite',
         'radar-sweep': 'radar-sweep 3s linear infinite',
         'radar-ping': 'radar-ping 1.4s ease-out infinite',
       },

@@ -37,6 +37,7 @@ export type AppState = {
   setSession: (s: Session | null) => void;
   setPlayers: (p: Player[]) => void;
   createSession: (args: { name: string; emoji: string }) => Promise<{ sessionId: string; code: string }>;
+  joinSession: (args: { code: string; name: string; emoji: string }) => Promise<{ sessionId: string }>;
 
   // current round
   currentRound: Round | null;
@@ -145,6 +146,36 @@ export const useStore = create<AppState>((set) => ({
     }));
 
     return { sessionId, code };
+  },
+
+  joinSession: async ({ code, name, emoji }) => {
+    const userId = useStore.getState().identity.authUserId;
+    if (!userId) throw new Error('Not authenticated yet — wait for anon sign-in to finish.');
+
+    const trimmedName = name.trim();
+    if (trimmedName.length < 1 || trimmedName.length > 24) {
+      throw new Error('Name must be 1–24 characters.');
+    }
+
+    const { data, error } = await supabase.rpc('join_session_by_code', {
+      p_code: code,
+      p_name: trimmedName,
+      p_emoji: emoji,
+    });
+    if (error) {
+      // Map known sqlstates to friendly messages.
+      switch (error.code) {
+        case 'P0002': throw new Error('That code doesn’t match an active hunt.');
+        case 'P0003': throw new Error('That hunt has already started.');
+        default: throw error;
+      }
+    }
+    const session = data as Session;
+    set((s) => ({
+      identity: { ...s.identity, name: trimmedName, emoji },
+      session,
+    }));
+    return { sessionId: session.id };
   },
 
   currentRound: null,

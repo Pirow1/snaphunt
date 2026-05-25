@@ -21,7 +21,11 @@ file. Don't edit by hand mid-phase; let `/pm` mutate it so the log stays clean.
   - Files: `src/lib/codes.ts`, `src/components/ui/{Button,CrosshairBg}.tsx`, `src/screens/{HomeScreen,CreateLobbyScreen}.tsx`, `createSession()` action in store
   - Migration `0003_fix_rls_recursion` applied to fix 42P17 in spec §6.2 policies (used a SECURITY DEFINER `my_session_ids()` helper)
   - Smoke (`_smoke/phase-1-3.mjs`): HUNT span rotate(-3deg) + blaze color, name+emoji flow inserts session+player row with correct fields, nav lands on /lobby/&lt;uuid&gt; via View Transition
-- [ ] **1.4** Join + Lobby with realtime
+- [x] **1.4** Join + Lobby with realtime — passed 2026-05-25
+  - Files: `useSession` hook, `joinSession()` store action, `JoinScreen`, `LobbyScreen`, `TopBar`/`PlayerRow`/`CodeInput` components
+  - Migrations 0004 (RPC + publication), 0005 (realtime.messages RLS), 0006 (broadcast triggers) applied via Supabase MCP
+  - Spec quirks: codes restricted to `23456789A` to match keypad; realtime CDC unreliable on supabase-js 2.106 — switched to private-channel broadcast-from-trigger
+  - Smoke (`_smoke/phase-1-4.mjs`): 2-browser test, B appears in A's lobby in 483 ms, QR canvas renders, Begin Hunt disabled at <3 players
 - [ ] **1.5** Vision pipeline groundwork ⭐ Pillar 1
 
 ## Day 2 — Gameplay core
@@ -49,3 +53,4 @@ file. Don't edit by hand mid-phase; let `/pm` mutate it so the log stays clean.
 - **2026-05-25** Phase 1.2 PASS — Anonymous sign-ins enabled; smoke test confirms anon UUID flows from Supabase → store
 - **2026-05-25** Phase 1.3 PREP — migration `0003_fix_rls_recursion` applied via Supabase MCP; hotfix for 42P17 recursion in 0001's `players`/`sessions`/`rounds` SELECT policies. DB ready for Create lobby flow.
 - **2026-05-25** Phase 1.3 PASS — Home + Create lobby; createSession() inserts session+host player; smoke verifies title rotation, blaze color, DB rows, store wiring
+- **2026-05-25** Phase 1.4 PASS — Join + Lobby with realtime; broadcast-from-trigger pattern (CDC postgres_changes was unreliable on supabase-js 2.106); B appears in A's lobby in 483 ms
