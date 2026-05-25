@@ -1,4 +1,7 @@
+import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { supabase } from './lib/supabase';
+import { useStore } from './lib/store';
 import HomeScreen from './screens/HomeScreen';
 import CreateLobbyScreen from './screens/CreateLobbyScreen';
 import JoinScreen from './screens/JoinScreen';
@@ -12,6 +15,43 @@ import ResultScreen from './screens/ResultScreen';
 import GalleryScreen from './screens/GalleryScreen';
 
 export default function App() {
+  const setAuthUserId = useStore((s) => s.setAuthUserId);
+
+  useEffect(() => {
+    // Bootstrap anon auth: reuse an existing session if one is cached in
+    // localStorage; otherwise create a fresh anonymous user. Listen for any
+    // future auth events so the store stays in sync.
+    let cancelled = false;
+
+    (async () => {
+      const { data: existing } = await supabase.auth.getSession();
+      if (existing.session?.user) {
+        if (!cancelled) setAuthUserId(existing.session.user.id);
+        return;
+      }
+      const { data, error } = await supabase.auth.signInAnonymously();
+      if (error) {
+        console.error('signInAnonymously failed:', error);
+        return;
+      }
+      if (!cancelled) setAuthUserId(data.user?.id ?? null);
+    })();
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthUserId(session?.user?.id ?? null);
+    });
+
+    if (import.meta.env.DEV) {
+      const w = window as unknown as { supabase: typeof supabase };
+      w.supabase = supabase;
+    }
+
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
+  }, [setAuthUserId]);
+
   return (
     <div id="app">
       <Routes>

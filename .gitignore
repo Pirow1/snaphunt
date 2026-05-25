@@ -19,6 +19,7 @@ dist-ssr
 
 # Project-local Claude Code / MCP config (per-user, not source)
 .mcp.json
+.agents/
 
 # smoke-test artifacts (screenshots, etc.) — scripts in _smoke/ are tracked
 _smoke/out/
