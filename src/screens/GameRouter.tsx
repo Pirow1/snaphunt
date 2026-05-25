@@ -16,10 +16,14 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSession } from '../hooks/useSession';
 import { useStore } from '../lib/store';
+import { supabase } from '../lib/supabase';
+import type { Submission } from '../lib/types';
 import RoleRevealScreen from './RoleRevealScreen';
 import HiderCaptureScreen from './HiderCaptureScreen';
 import HiderWaitScreen from './HiderWaitScreen';
 import SeekerHuntScreen from './SeekerHuntScreen';
+import VerifyingScreen from './VerifyingScreen';
+import ResultScreen from './ResultScreen';
 
 export default function GameRouter() {
   const { sessionId = null } = useParams<{ sessionId: string }>();
@@ -32,6 +36,26 @@ export default function GameRouter() {
   const authUserId = useStore((s) => s.identity.authUserId);
 
   const [accepted, setAccepted] = useState(false);
+  const submissionId = useStore((s) => s.currentSubmissionId);
+  const [submission, setSubmission] = useState<Submission | null>(null);
+
+  // Poll the seeker's own submission for status changes (covers both the
+  // local-decision instant flip and the cloud-stub's 4s timer).
+  useEffect(() => {
+    if (!submissionId) { setSubmission(null); return; }
+    let cancelled = false;
+    let timer: number | null = null;
+    const tick = async () => {
+      const { data } = await supabase.from('submissions').select('*').eq('id', submissionId).maybeSingle();
+      if (cancelled) return;
+      setSubmission(data as Submission | null);
+      if (data?.status !== 'verified') {
+        timer = window.setTimeout(tick, 400);
+      }
+    };
+    tick();
+    return () => { cancelled = true; if (timer) clearTimeout(timer); };
+  }, [submissionId]);
 
   // If we somehow land here without an active session (refresh, bad URL),
   // bounce back home so the user can re-join.
@@ -63,10 +87,18 @@ export default function GameRouter() {
     );
   }
 
-  // Post-accept: route to the role-specific screen. The actual content of
-  // these screens is built in Phase 2.2 (hider) and Phase 2.4 (seeker).
+  // Hider: capture before the trap is set, wait after.
   if (isHider) {
     return round.status === 'pending' ? <HiderCaptureScreen /> : <HiderWaitScreen />;
+  }
+
+  // Seeker state machine: no submission yet → hunt; pending submission with
+  // photo path (cloud branch) → verifying; verified → result.
+  if (submissionId) {
+    if (!submission || submission.status === 'pending') {
+      return submission?.photo_path || submission === null ? <VerifyingScreen /> : <SeekerHuntScreen />;
+    }
+    if (submission.status === 'verified') return <ResultScreen />;
   }
   return <SeekerHuntScreen />;
 }

@@ -13,6 +13,7 @@ import { haversine } from '../lib/geolocation';
 import { TopBar, TopBarBadge } from '../components/ui/TopBar';
 import { TargetCard } from '../components/game/TargetCard';
 import { Radar } from '../components/game/Radar';
+import { PhotoCapture } from '../components/game/PhotoCapture';
 
 export default function SeekerHuntScreen() {
   const round = useStore((s) => s.currentRound);
@@ -22,9 +23,12 @@ export default function SeekerHuntScreen() {
   const { coords } = useGeolocation();
   const { heading, requestPerm } = useCompass();
 
+  const submitGuess = useStore((s) => s.submitGuess);
   const [sharpenLevel, setSharpenLevel] = useState<0 | 1 | 2 | 3>(0);
   const [hintRevealed, setHintRevealed] = useState(false);
   const [compassNeedsPerm, setCompassNeedsPerm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Distance: only computable once we have BOTH the hider pin and our coords.
   const distance = useMemo(() => {
@@ -147,19 +151,39 @@ export default function SeekerHuntScreen() {
             </span>
           </button>
 
-          <button
-            type="button"
-            className="col-span-2 flex items-center justify-center gap-3 border-2 border-ink bg-blaze px-5 py-[22px] font-display text-[18px] font-extrabold uppercase tracking-[0.1em] text-cream shadow-brutal hover:bg-blaze-deep active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_var(--ink)]"
-            data-testid="submit-finding"
-            style={{ viewTransitionName: 'shutter-btn' }}
-            // Submit handler lands in Phase 2.5 (hybrid submission).
-            onClick={() => { /* TODO Phase 2.5 */ }}
+          <PhotoCapture
+            ariaLabel="Submit Finding"
+            onCapture={async (f) => {
+              if (submitting) return;
+              setSubmitError(null);
+              setSubmitting(true);
+              try {
+                await submitGuess({ file: f });
+                // GameRouter routes to VerifyingScreen / ResultScreen based on
+                // the new currentSubmissionId + submission status.
+              } catch (e) {
+                setSubmitError(e instanceof Error ? e.message : 'Submit failed');
+                setSubmitting(false);
+              }
+            }}
+            buttonProps={{
+              className:
+                'col-span-2 flex items-center justify-center gap-3 border-2 border-ink bg-blaze px-5 py-[22px] font-display text-[18px] font-extrabold uppercase tracking-[0.1em] text-cream shadow-brutal hover:bg-blaze-deep active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_var(--ink)] disabled:opacity-40',
+              'data-testid': 'submit-finding',
+              style: { viewTransitionName: 'shutter-btn' },
+              disabled: submitting,
+            }}
           >
             <span className="relative inline-block h-6 w-6 rounded-full border-[3px] border-cream">
               <span aria-hidden="true" className="absolute inset-[3px] rounded-full bg-cream" />
             </span>
-            Submit Finding
-          </button>
+            {submitting ? 'Submitting…' : 'Submit Finding'}
+          </PhotoCapture>
+          {submitError && (
+            <div className="col-span-2 border-2 border-ink bg-blaze px-3 py-2 font-display text-sm font-bold text-cream">
+              {submitError}
+            </div>
+          )}
         </div>
       </div>
     </main>

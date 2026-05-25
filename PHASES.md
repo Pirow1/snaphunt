@@ -53,7 +53,12 @@ file. Don't edit by hand mid-phase; let `/pm` mutate it so the log stays clean.
   - Radar: CSS-only grid (3 rings + crosshair), 3s sweep, blaze ping, distance + temp (BURNING/HOT/WARM/COLD/FROZEN per spec §12.8), BearingArrow overlay
   - Presence: `presence:session:<id>` channel; seeker .track({ distance_meters }) — distance only, NO raw coords. Store flag `lastTrackedDistance` for diagnostic.
   - Smoke (`_smoke/phase-2-4.mjs`, non-headless): hider sets trap → seeker view loads, blurred photo via signed URL, sharpen×3 → blur 0/disabled, hint reveals, distance falls when GPS moves closer, presence track succeeds.
-- [ ] **2.5** Hybrid submission ⭐ Pillar 1
+- [x] **2.5** Hybrid submission ⭐ Pillar 1 — local_high path passed 2026-05-25
+  - Files: `submitGuess()` store action with 3-branch logic, `VerifyingScreen` (theatrical 4s scan), `ResultScreen` (forest/blaze banner + AI verdict + decision-source subtitle), SeekerHuntScreen submit-button wiring, GameRouter routing on submission status
+  - Migrations: 0008 `claim_round_match` RPC (verifies seeker has matching submission before flipping round to finished, secure replacement for direct finalize_round_winner exposure), 0009 submissions UPDATE RLS for client-side local decisions
+  - Cloud branch stubbed inline with 4s timer + random verdict (Phase 3.1 replaces with real Claude edge function)
+  - Smoke (`_smoke/phase-2-5.mjs`, non-headless): seeker re-uploads hider's exact image → cosine=1.0 → decision_source=local_high, match=true, status=verified, ResultScreen "A Match!" / "Decided Locally · ~200ms", round.status=finished, winner_id set, +50 score
+  - local_low + cloud branches: build is correct (Pillar 1 cosine path identical), full verification in Phase 3.1
 
 ## Day 3 — Cloud, scoring, polish
 
@@ -78,3 +83,4 @@ file. Don't edit by hand mid-phase; let `/pm` mutate it so the log stays clean.
 - **2026-05-25** Phase 2.2 PASS — Pillar 1 wired into gameplay; setTrap() persists embedding (512 floats, |v|=1.0) + photo + GPS + difficulty. Migration 0007 atomic create_session_with_host RPC. Realtime SUBSCRIBED re-fetch race fix. Supabase anon rate limit bumped to 200/hr to support smoke runs.
 - **2026-05-25** Phase 2.3 PASS — Pillar 4 compass + bearing math; cross-platform (iOS webkitCompassHeading, Android 360-alpha, requestPermission gesture); /compass-test DEV page verifies arrowAngle = (bearing − heading + 360) mod 360 with synthesised events.
 - **2026-05-25** Phase 2.4 PASS — SeekerHuntScreen with TargetCard + Radar; sharpen 3-step blur, hint reveal, distance/temp readout, BearingArrow overlay, presence broadcasts distance only.
+- **2026-05-25** Phase 2.5 PASS — Pillar 1 hybrid submission; local_high path verified end-to-end (cosine 1.0 → instant ResultScreen, +50pts, round finished). Cloud-stub fires after 4s; Phase 3.1 will swap with real Claude tool use.

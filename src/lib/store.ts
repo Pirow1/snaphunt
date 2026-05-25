@@ -3,8 +3,8 @@ import { supabase } from './supabase';
 import { generateJoinCode } from './codes';
 import { compressedPhoto } from './camera';
 import { encodeImage } from './vision';
-import { serializeEmbedding } from './embeddings';
-import { getCurrentCoords } from './geolocation';
+import { cosine, deserializeEmbedding, serializeEmbedding } from './embeddings';
+import { getCurrentCoords, haversine } from './geolocation';
 import { DEFAULT_SESSION_SETTINGS, type Difficulty, type Player, type Round, type Session, type Submission } from './types';
 
 const POINTS_BY_DIFFICULTY: Record<Difficulty, number> = {
@@ -50,6 +50,15 @@ export type AppState = {
   joinSession: (args: { code: string; name: string; emoji: string }) => Promise<{ sessionId: string }>;
   startGame: () => Promise<{ roundId: string; hiderId: string }>;
   setTrap: (args: { file: File | Blob; difficulty: Difficulty; hint: string }) => Promise<{ roundId: string }>;
+  submitGuess: (args: { file: File | Blob }) => Promise<{
+    branch: 'local_high' | 'local_low' | 'cloud';
+    submissionId: string;
+    localSimilarity: number;
+    distanceMeters: number;
+  }>;
+
+  currentSubmissionId: string | null;
+  setCurrentSubmissionId: (id: string | null) => void;
 
   // current round
   currentRound: Round | null;
@@ -317,6 +326,105 @@ export const useStore = create<AppState>((set) => ({
 
   lastTrackedDistance: null,
   setLastTrackedDistance: (d) => set({ lastTrackedDistance: d }),
+
+  currentSubmissionId: null,
+  setCurrentSubmissionId: (id) => set({ currentSubmissionId: id }),
+
+  submitGuess: async ({ file }) => {
+    const state = useStore.getState();
+    const round = state.currentRound;
+    const session = state.session;
+    const userId = state.identity.authUserId;
+    const coords = state.coords;
+
+    if (!round || !session || !userId) throw new Error('No active round.');
+    if (!coords) throw new Error('Waiting for GPS — try again in a moment.');
+    if (!round.photo_embedding || round.hider_lat === null || round.hider_lng === null) {
+      throw new Error('Round not ready yet.');
+    }
+    if (round.hider_id === userId) throw new Error("Hiders can't submit.");
+
+    const compressed = await compressedPhoto(file);
+    const seekerEmbedding = await encodeImage(compressed);
+    const hiderEmbedding = deserializeEmbedding(round.photo_embedding);
+    const localSim = cosine(seekerEmbedding, hiderEmbedding);
+
+    const distM = haversine(coords, { lat: round.hider_lat, lng: round.hider_lng, accuracy: 0 });
+    const s = session.settings;
+    const withinRange = distM <= s.location_tolerance_meters;
+
+    const submissionId = crypto.randomUUID();
+    const baseRow = {
+      id: submissionId,
+      round_id: round.id,
+      seeker_id: userId,
+      local_similarity: localSim,
+      seeker_lat: coords.lat,
+      seeker_lng: coords.lng,
+      distance_meters: distM,
+    };
+
+    const { error: insErr } = await supabase.from('submissions').insert(baseRow);
+    if (insErr) throw insErr;
+    set({ currentSubmissionId: submissionId });
+
+    if (localSim >= s.local_match_threshold && withinRange) {
+      const path = `${submissionId}.jpg`;
+      await supabase.storage
+        .from('submission-photos')
+        .upload(path, compressed, { contentType: 'image/jpeg', upsert: true });
+      await supabase.from('submissions').update({
+        photo_path: path,
+        is_match: true,
+        decision_source: 'local_high',
+        status: 'verified',
+        verified_at: new Date().toISOString(),
+      }).eq('id', submissionId);
+      // Claim the win — atomic, only the first match per round actually flips status.
+      await supabase.rpc('claim_round_match', { p_round_id: round.id });
+      return { branch: 'local_high', submissionId, localSimilarity: localSim, distanceMeters: distM };
+    }
+
+    if (localSim < s.local_reject_threshold) {
+      await supabase.from('submissions').update({
+        is_match: false,
+        decision_source: 'local_low',
+        status: 'verified',
+        verified_at: new Date().toISOString(),
+      }).eq('id', submissionId);
+      return { branch: 'local_low', submissionId, localSimilarity: localSim, distanceMeters: distM };
+    }
+
+    // Cloud-escalation branch. Upload photo; the edge function (Phase 3.1)
+    // will read it via signed URL. For Phase 2.5 we STUB it inline.
+    const path = `${submissionId}.jpg`;
+    await supabase.storage
+      .from('submission-photos')
+      .upload(path, compressed, { contentType: 'image/jpeg', upsert: true });
+    await supabase.from('submissions').update({ photo_path: path }).eq('id', submissionId);
+
+    // STUB — Phase 3.1 replaces this with a real /verify-submission call.
+    setTimeout(async () => {
+      const isMatch = Math.random() > 0.5;
+      const cloudSim = isMatch ? 75 + Math.floor(Math.random() * 25) : 30 + Math.floor(Math.random() * 30);
+      const reasoning = isMatch
+        ? 'Both photos show the same object. Verified.'
+        : 'Same family, different specimen — not a match.';
+      await supabase.from('submissions').update({
+        cloud_similarity: cloudSim,
+        cloud_reasoning: reasoning,
+        is_match: isMatch && withinRange,
+        decision_source: 'cloud',
+        status: 'verified',
+        verified_at: new Date().toISOString(),
+      }).eq('id', submissionId);
+      if (isMatch && withinRange) {
+        await supabase.rpc('claim_round_match', { p_round_id: round.id });
+      }
+    }, 4000);
+
+    return { branch: 'cloud', submissionId, localSimilarity: localSim, distanceMeters: distM };
+  },
 
   toasts: [],
   pushToast: (text, tone = 'info') =>
