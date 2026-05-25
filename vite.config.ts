@@ -57,4 +57,13 @@ export default defineConfig({
       'Cross-Origin-Embedder-Policy': 'credentialless',
     },
   },
+  preview: {
+    host: true,
+    // Mirror dev so local `vite preview` builds the same SAB-capable env.
+    // In production, vercel.json serves these headers from edge.
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'credentialless',
+    },
+  },
 });

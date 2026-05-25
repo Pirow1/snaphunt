@@ -53,14 +53,15 @@ export default function App() {
       setAuthUserId(session?.user?.id ?? null);
     });
 
-    if (import.meta.env.DEV) {
-      const w = window as unknown as {
-        supabase: typeof supabase;
-        useStore: typeof useStore;
-      };
-      w.supabase = supabase;
-      w.useStore = useStore;
-    }
+    // Expose anon-key supabase client + store on window for console debugging
+    // from any deployed device (no service role, no secrets — anon-only). Also
+    // unblocks the production-bundle smokes that read from window.useStore.
+    const w = window as unknown as {
+      supabase: typeof supabase;
+      useStore: typeof useStore;
+    };
+    w.supabase = supabase;
+    w.useStore = useStore;
 
     return () => {
       cancelled = true;

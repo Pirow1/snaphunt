@@ -98,7 +98,7 @@ export type AppState = {
 
 let toastSeq = 0;
 
-export const useStore = create<AppState>((set) => ({
+export const useStore = create<AppState>()((set) => ({
   identity: { authUserId: null, name: '', emoji: '🦊' },
   setAuthUserId: (id) =>
     set((s) => ({ identity: { ...s.identity, authUserId: id } })),

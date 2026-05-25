@@ -35,3 +35,4 @@ _smoke/.auth/
 *.njsproj
 *.sln
 *.sw?
+tsconfig.app.tsbuildinfo
