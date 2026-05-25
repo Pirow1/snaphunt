@@ -1,25 +1,14 @@
-import { useEffect } from 'react';
 import { useViewTransition } from '../hooks/useViewTransition';
-import { useStore } from '../lib/store';
-import { initVision } from '../lib/vision';
 import { Button } from '../components/ui/Button';
 import { CrosshairBg } from '../components/ui/CrosshairBg';
 
 // Matches snaphunt.html #screen-home — topbar, crosshair hero, blaze rotated
 // HUNT accent, italic Fraunces tagline, two CTAs, dashed-top meta footer.
+//
+// initVision is fired from App.tsx so it pre-warms regardless of which
+// route a user lands on first (e.g. a deep-linked /join/<code>).
 export default function HomeScreen() {
   const go = useViewTransition();
-  const setVisionLoadProgress = useStore((s) => s.setVisionLoadProgress);
-  const setVisionReady = useStore((s) => s.setVisionReady);
-
-  // Pillar 1 — pre-warm the CLIP model in the background as soon as the user
-  // hits the home screen, so it's ready (or nearly so) by the time they hit
-  // gameplay. initVision is idempotent at module scope.
-  useEffect(() => {
-    initVision((pct) => setVisionLoadProgress(pct))
-      .then(() => setVisionReady(true))
-      .catch((err) => console.error('[vision] init failed:', err));
-  }, [setVisionLoadProgress, setVisionReady]);
 
   return (
     <main className="flex h-full w-full flex-col bg-cream text-ink">

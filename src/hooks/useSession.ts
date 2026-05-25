@@ -87,8 +87,23 @@ export function useSession(sessionId: string | null): void {
           const p = payload as BroadcastPayload;
           if (p.new) setSession(p.new as Session);
         })
-        .subscribe((status, err) => {
+        .subscribe(async (status, err) => {
           if (import.meta.env.DEV) console.log('[rt/subscribe]', status, err?.message ?? '');
+          // Race: any INSERT that landed between our initial fetch and the
+          // SUBSCRIBED handshake was never delivered (Realtime doesn't queue).
+          // Re-fetch once on subscribe to close the window.
+          if (status === 'SUBSCRIBED' && !cancelled) {
+            const [{ data: sx }, { data: ps }, { data: rs }] = await Promise.all([
+              supabase.from('sessions').select('*').eq('id', sessionId).maybeSingle(),
+              supabase.from('players').select('*').eq('session_id', sessionId).order('joined_at'),
+              supabase.from('rounds').select('*').eq('session_id', sessionId).order('round_number', { ascending: false }).limit(1),
+            ]);
+            if (!cancelled) {
+              if (sx) setSession(sx as Session);
+              setPlayers((ps ?? []) as Player[]);
+              setCurrentRound((rs?.[0] ?? null) as Round | null);
+            }
+          }
         });
     })();
 

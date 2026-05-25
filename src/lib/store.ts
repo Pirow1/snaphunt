@@ -1,7 +1,17 @@
 import { create } from 'zustand';
 import { supabase } from './supabase';
 import { generateJoinCode } from './codes';
-import { DEFAULT_SESSION_SETTINGS, type Player, type Round, type Session, type Submission } from './types';
+import { compressedPhoto } from './camera';
+import { encodeImage } from './vision';
+import { serializeEmbedding } from './embeddings';
+import { getCurrentCoords } from './geolocation';
+import { DEFAULT_SESSION_SETTINGS, type Difficulty, type Player, type Round, type Session, type Submission } from './types';
+
+const POINTS_BY_DIFFICULTY: Record<Difficulty, number> = {
+  easy: 50,
+  medium: 100,
+  legendary: 250,
+};
 
 // Zustand store skeleton — slices per spec §11.1:
 // identity, session, current round, geolocation, compass heading,
@@ -39,6 +49,7 @@ export type AppState = {
   createSession: (args: { name: string; emoji: string }) => Promise<{ sessionId: string; code: string }>;
   joinSession: (args: { code: string; name: string; emoji: string }) => Promise<{ sessionId: string }>;
   startGame: () => Promise<{ roundId: string; hiderId: string }>;
+  setTrap: (args: { file: File | Blob; difficulty: Difficulty; hint: string }) => Promise<{ roundId: string }>;
 
   // current round
   currentRound: Round | null;
@@ -92,31 +103,27 @@ export const useStore = create<AppState>((set) => ({
       throw new Error('Name must be 1–24 characters.');
     }
 
-    // Pre-generate the session id so we never need to .select() under RLS
-    // (the "read own sessions" policy depends on the player row, which we
-    // haven't inserted yet at the moment of session insert).
+    // Pre-generate the session id; atomic RPC handles both session + host
+    // player inserts under SECURITY DEFINER, sidestepping RLS chicken-and-egg.
     const sessionId = crypto.randomUUID();
 
-    // Try a few codes in case of unique-constraint collision (23505).
+    // Retry on unique-code collision (23505).
     let code = '';
+    let lastErr: { code?: string; message?: string } | null = null;
     for (let attempt = 0; attempt < 5; attempt++) {
       code = generateJoinCode();
-      const { error } = await supabase
-        .from('sessions')
-        .insert({ id: sessionId, code, host_id: userId });
-      if (!error) break;
+      const { error } = await supabase.rpc('create_session_with_host', {
+        p_session_id: sessionId,
+        p_code: code,
+        p_name: trimmedName,
+        p_emoji: emoji,
+      });
+      if (!error) { lastErr = null; break; }
+      lastErr = error;
       if (error.code !== '23505') throw error;
       if (attempt === 4) throw new Error('Could not generate a unique join code, please try again.');
     }
-
-    const { error: playerErr } = await supabase.from('players').insert({
-      id: userId,
-      session_id: sessionId,
-      name: trimmedName,
-      emoji,
-      is_host: true,
-    });
-    if (playerErr) throw playerErr;
+    if (lastErr) throw lastErr;
 
     // Optimistic local state — realtime subscription in Phase 1.4 will overwrite.
     const now = new Date().toISOString();
@@ -212,6 +219,77 @@ export const useStore = create<AppState>((set) => ({
     if (sErr) throw sErr;
 
     return { roundId, hiderId: hider.id };
+  },
+
+  setTrap: async ({ file, difficulty, hint }) => {
+    // The architectural heart of Pillar 1 (spec §9.5):
+    //   compress → encode (CLIP) → upload → update round in one async tx.
+    const state = useStore.getState();
+    const round = state.currentRound;
+    const session = state.session;
+    const userId = state.identity.authUserId;
+
+    if (!session || !round || !userId) throw new Error('No active round.');
+    if (round.hider_id !== userId) throw new Error('Only the hider can set the trap.');
+
+    // 1) Compress + encode in parallel where possible.
+    const compressed = await compressedPhoto(file);
+    const embedding = await encodeImage(compressed);
+
+    // 2) GPS pin. Awaited after encode so the user only sees one async step
+    //    visually ("encoding…"). If the user denies location we surface it.
+    const coords = await getCurrentCoords();
+
+    // 3) Upload to round-photos/<roundId>.jpg (upsert in case of re-trap).
+    const path = `${round.id}.jpg`;
+    const { error: upErr } = await supabase.storage
+      .from('round-photos')
+      .upload(path, compressed, { contentType: 'image/jpeg', upsert: true });
+    if (upErr) throw new Error(`upload failed: ${upErr.message}`);
+
+    // 4) Update the round row atomically.
+    const durationSec = session.settings.round_duration_seconds ?? 600;
+    const startedAt = new Date();
+    const expiresAt = new Date(startedAt.getTime() + durationSec * 1000);
+
+    const { error: rErr } = await supabase
+      .from('rounds')
+      .update({
+        photo_path: path,
+        photo_embedding: serializeEmbedding(embedding),
+        hint: hint.trim() || null,
+        difficulty,
+        point_value: POINTS_BY_DIFFICULTY[difficulty],
+        hider_lat: coords.lat,
+        hider_lng: coords.lng,
+        status: 'active',
+        started_at: startedAt.toISOString(),
+        expires_at: expiresAt.toISOString(),
+      })
+      .eq('id', round.id);
+    if (rErr) throw rErr;
+
+    // Optimistic local — realtime broadcast will follow.
+    set((s) => ({
+      currentRound: s.currentRound
+        ? {
+            ...s.currentRound,
+            photo_path: path,
+            photo_embedding: serializeEmbedding(embedding),
+            hint: hint.trim() || null,
+            difficulty,
+            point_value: POINTS_BY_DIFFICULTY[difficulty],
+            hider_lat: coords.lat,
+            hider_lng: coords.lng,
+            status: 'active',
+            started_at: startedAt.toISOString(),
+            expires_at: expiresAt.toISOString(),
+          }
+        : null,
+      coords,
+    }));
+
+    return { roundId: round.id };
   },
 
   currentRound: null,

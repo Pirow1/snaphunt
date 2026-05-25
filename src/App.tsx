@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './lib/supabase';
 import { useStore } from './lib/store';
+import { initVision } from './lib/vision';
 import HomeScreen from './screens/HomeScreen';
 import CreateLobbyScreen from './screens/CreateLobbyScreen';
 import JoinScreen from './screens/JoinScreen';
@@ -14,6 +15,17 @@ import VisionTestScreen from './screens/VisionTestScreen';
 
 export default function App() {
   const setAuthUserId = useStore((s) => s.setAuthUserId);
+  const setVisionLoadProgress = useStore((s) => s.setVisionLoadProgress);
+  const setVisionReady = useStore((s) => s.setVisionReady);
+
+  // Pillar 1 pre-warm — kicks off the moment the app loads, regardless of
+  // which route the user lands on (HomeScreen, /join deep link, /game refresh
+  // etc.). initVision is module-scope idempotent.
+  useEffect(() => {
+    initVision((pct) => setVisionLoadProgress(pct))
+      .then(() => setVisionReady(true))
+      .catch((err) => console.error('[vision] init failed:', err));
+  }, [setVisionLoadProgress, setVisionReady]);
 
   useEffect(() => {
     // Bootstrap anon auth: reuse an existing session if one is cached in

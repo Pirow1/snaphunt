@@ -23,6 +23,7 @@ dist-ssr
 
 # smoke-test artifacts (screenshots, etc.) — scripts in _smoke/ are tracked
 _smoke/out/
+_smoke/.auth/
 
 # Editor directories and files
 .vscode/*

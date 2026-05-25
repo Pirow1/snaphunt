@@ -40,7 +40,10 @@ file. Don't edit by hand mid-phase; let `/pm` mutate it so the log stays clean.
   - GameRouter is the in-game state machine: per-client `accepted` flag, renders RoleReveal then Hider/Seeker placeholder. View Transition runs lobby→game via session.status broadcast.
   - Stamp animation matches prototype (rotate(-4deg) scale 3→0.92→1 over 600ms)
   - Smoke (`_smoke/phase-2-1.mjs`, 3 browsers): all reach /game in 679 ms; hiders=1, seekers=2; stamps render; Accept Mission routes to correct placeholder
-- [ ] **2.2** Hider capture + embedding ⭐ Pillar 1
+- [x] **2.2** Hider capture + embedding ⭐ Pillar 1 — passed 2026-05-25
+  - Files: `src/lib/{camera,geolocation}.ts`, `src/components/game/PhotoCapture.tsx`, real `HiderCaptureScreen`, `setTrap()` store action, migration `0007_create_session_rpc` (avoids RLS chicken-and-egg on host upsert), `useSession` SUBSCRIBED re-fetch (catches realtime race), bumped Supabase anon rate limit to 200/hr/IP
+  - Pillar 1 fully wired: compress → encode (CLIP) → GPS pin → upload → atomic round UPDATE
+  - Smoke (`_smoke/phase-2-2.mjs`, non-headless): full 3-browser game start → trap. round row has photo_path, hider_lat=51.5074, hider_lng=-0.1278, hint, difficulty=medium, point_value=100, status=active, started_at, expires_at, 512-dim embedding with |v|=1.0000, photo accessible via signed URL
 - [ ] **2.3** Compass + bearing arrow ⭐ Pillar 4
 - [ ] **2.4** Seeker hunt screen + radar
 - [ ] **2.5** Hybrid submission ⭐ Pillar 1
@@ -65,3 +68,4 @@ file. Don't edit by hand mid-phase; let `/pm` mutate it so the log stays clean.
 - **2026-05-25** Phase 1.4 PASS — Join + Lobby with realtime; broadcast-from-trigger pattern (CDC postgres_changes was unreliable on supabase-js 2.106); B appears in A's lobby in 483 ms
 - **2026-05-25** Phase 1.5 PASS — Pillar 1 CLIP pipeline via @huggingface/transformers; WebGPU + q8 quantized model (~87MB); /vision-test dev page; HomeScreen pre-warms model on mount
 - **2026-05-25** Phase 2.1 PASS — startGame()/GameRouter/RoleRevealScreen; 3-browser smoke: roles assigned correctly, View Transition lobby→game works (screenshot caught mid-morph)
+- **2026-05-25** Phase 2.2 PASS — Pillar 1 wired into gameplay; setTrap() persists embedding (512 floats, |v|=1.0) + photo + GPS + difficulty. Migration 0007 atomic create_session_with_host RPC. Realtime SUBSCRIBED re-fetch race fix. Supabase anon rate limit bumped to 200/hr to support smoke runs.
