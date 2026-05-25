@@ -68,7 +68,13 @@ file. Don't edit by hand mid-phase; let `/pm` mutate it so the log stays clean.
   - Spec departures: added CORS preflight handler (browser `functions.invoke` sends OPTIONS); imports rewritten to `jsr:`/`npm:` specifiers (Supabase MCP deploy convention vs. spec's `esm.sh`)
   - Smoke (`_smoke/phase-3-1.mjs`, non-headless): identical photos with seeker's local thresholds clamped to `[2.0, -1.0]` to force escalation. POST 200 in 5.5s edge-fn time / 11.4s round-trip. `decision_source='cloud'`, `cloud_similarity=100`, `is_match=true`, ResultScreen shows "A Match!" + "Verified by Claude" subtitle, round.status='finished', winner set, +50 score.
   - Sample reasoning Claude returned: *"These two images are pixel-perfect identical — the seeker didn't just find the statue, they practically found the same p[hoto]…"* (witty narrator voice per system prompt)
-- [ ] **3.2** Multi-round flow + scoring
+- [x] **3.2** Multi-round flow + scoring — passed 2026-05-25
+  - Files: `src/hooks/useCountdown.ts`, real `src/screens/HiderWaitScreen.tsx`, `src/screens/GameRouter.tsx` (multi-round wiring), `src/hooks/useSession.ts` (submissions broadcast → store), `src/lib/store.ts` actions (`startNextRound`, `finishSession`, `expireRoundNoWinner`)
+  - Migrations 0010 `start_next_round` + `expire_round_no_winner` RPCs (host-only, SECURITY DEFINER, atomic insert+update / status flip + hider 50% bonus), 0011 `broadcast_submission_change` trigger (mirrors 0006 pattern for submissions → `session:<id>` topic, event=`submissions`)
+  - GameRouter multi-round wiring: when `round.id` changes, resets `accepted`/`currentSubmissionId`/`submissions` so RoleReveal fires again. Host-only effect: 5s after `round.status='finished'`, calls `startNextRound()` or `finishSession()` (last round). `session.status='finished'` triggers everyone navigating to `/gallery/:sessionId`.
+  - HiderWaitScreen matches prototype: rotate(-3deg) "TRAP SET" stamp, floating eye SVG, mm:ss countdown via `useCountdown`, live seeker list reading from presence channel (distance + temp). Toasts on submission lifecycle (`X is verifying… (local)` / `X escalated to cloud` / `X matched!` or `no match`).
+  - Smoke (`_smoke/phase-3-2.mjs`, non-headless, 3 browsers): full 3-round game with `rounds_total=3`. Hiders rotated Bob → Cleo → Alice (each +1 in join order), winners Alice/Alice/Bob, final scores Alice=100, Bob=50, Cleo=0, all clients navigated to `/gallery/<id>`, session.status='finished' with finished_at set.
+  - Out of scope deferred to 3.3: hider/seeker "round over" mid-banner (currently they just see their existing screen during the 5s pause); no-winner expiry path (RPC exists, smoke doesn't exercise — 3 active wins).
 - [ ] **3.3** Gallery + polish
 - [ ] **3.4** Deploy
 
@@ -90,3 +96,4 @@ file. Don't edit by hand mid-phase; let `/pm` mutate it so the log stays clean.
 - **2026-05-25** Phase 2.4 PASS — SeekerHuntScreen with TargetCard + Radar; sharpen 3-step blur, hint reveal, distance/temp readout, BearingArrow overlay, presence broadcasts distance only.
 - **2026-05-25** Phase 2.5 PASS — Pillar 1 hybrid submission; local_high path verified end-to-end (cosine 1.0 → instant ResultScreen, +50pts, round finished). Cloud-stub fires after 4s; Phase 3.1 will swap with real Claude tool use.
 - **2026-05-25** Phase 3.1 PASS — Pillar 3 wired; verify-submission edge function deployed, real Claude tool_use round-trip in ~5.5s, ResultScreen shows real reasoning + "Verified by Claude". Stub removed from store.ts.
+- **2026-05-25** Phase 3.2 PASS — multi-round flow + scoring; HiderWaitScreen real (stamp + eye + presence list + countdown), GameRouter auto-advances on round.finished (5s pause), end-of-game → /gallery navigation. 3-round smoke verifies rotation, scores, finish-state across 3 browsers.

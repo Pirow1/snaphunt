@@ -2,11 +2,11 @@ import { useEffect } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { useStore } from '../lib/store';
-import type { Player, Round, Session } from '../lib/types';
+import type { Player, Round, Session, Submission } from '../lib/types';
 
 type BroadcastPayload = {
   eventType: 'INSERT' | 'UPDATE' | 'DELETE';
-  table: 'players' | 'rounds' | 'sessions';
+  table: 'players' | 'rounds' | 'sessions' | 'submissions';
   new: Record<string, unknown> | null;
   old: Record<string, unknown> | null;
 };
@@ -25,6 +25,7 @@ export function useSession(sessionId: string | null): void {
   const setSession = useStore((s) => s.setSession);
   const setPlayers = useStore((s) => s.setPlayers);
   const setCurrentRound = useStore((s) => s.setCurrentRound);
+  const upsertSubmission = useStore((s) => s.upsertSubmission);
   const authUserId = useStore((s) => s.identity.authUserId);
 
   useEffect(() => {
@@ -87,6 +88,11 @@ export function useSession(sessionId: string | null): void {
           const p = payload as BroadcastPayload;
           if (p.new) setSession(p.new as Session);
         })
+        .on('broadcast', { event: 'submissions' }, ({ payload }) => {
+          const p = payload as BroadcastPayload;
+          if (p.eventType === 'DELETE' || !p.new) return;
+          upsertSubmission(p.new as Submission);
+        })
         .subscribe(async (status, err) => {
           if (import.meta.env.DEV) console.log('[rt/subscribe]', status, err?.message ?? '');
           // Race: any INSERT that landed between our initial fetch and the
@@ -111,5 +117,5 @@ export function useSession(sessionId: string | null): void {
       cancelled = true;
       if (channel) supabase.removeChannel(channel);
     };
-  }, [sessionId, authUserId, setSession, setPlayers, setCurrentRound]);
+  }, [sessionId, authUserId, setSession, setPlayers, setCurrentRound, upsertSubmission]);
 }

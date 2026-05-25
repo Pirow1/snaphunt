@@ -49,6 +49,9 @@ export type AppState = {
   createSession: (args: { name: string; emoji: string }) => Promise<{ sessionId: string; code: string }>;
   joinSession: (args: { code: string; name: string; emoji: string }) => Promise<{ sessionId: string }>;
   startGame: () => Promise<{ roundId: string; hiderId: string }>;
+  startNextRound: () => Promise<{ roundId: string; hiderId: string } | null>;
+  finishSession: () => Promise<void>;
+  expireRoundNoWinner: () => Promise<void>;
   setTrap: (args: { file: File | Blob; difficulty: Difficulty; hint: string }) => Promise<{ roundId: string }>;
   submitGuess: (args: { file: File | Blob }) => Promise<{
     branch: 'local_high' | 'local_low' | 'cloud';
@@ -232,6 +235,70 @@ export const useStore = create<AppState>((set) => ({
     if (sErr) throw sErr;
 
     return { roundId, hiderId: hider.id };
+  },
+
+  // Host-only: create the next round with a rotated hider (next in join order
+  // by joined_at). Returns null when rounds_total has been reached — caller
+  // should then finishSession().
+  startNextRound: async () => {
+    const state = useStore.getState();
+    const session = state.session;
+    const players = state.players;
+    const round = state.currentRound;
+    const userId = state.identity.authUserId;
+
+    if (!session || !round || !userId) throw new Error('No active session.');
+    if (session.host_id !== userId) throw new Error('Only the host can advance rounds.');
+    if (round.round_number >= session.settings.rounds_total) return null;
+
+    // Rotate the hider by join order. players[] from useSession is already
+    // sorted by joined_at; current hider's index advances by 1.
+    const sorted = players.slice().sort((a, b) => a.joined_at.localeCompare(b.joined_at));
+    const currentIdx = sorted.findIndex((p) => p.id === round.hider_id);
+    const nextIdx = currentIdx >= 0 ? (currentIdx + 1) % sorted.length : 0;
+    const nextHider = sorted[nextIdx]!;
+    const nextNumber = round.round_number + 1;
+
+    const { data, error } = await supabase.rpc('start_next_round', {
+      p_session_id: session.id,
+      p_hider_id: nextHider.id,
+      p_round_number: nextNumber,
+    });
+    if (error) throw error;
+    return { roundId: (data as Round).id, hiderId: nextHider.id };
+  },
+
+  // Host-only: mark the session 'finished' after rounds_total has been
+  // reached. Realtime broadcast pushes the new status to all clients;
+  // GameRouter navigates everyone to /gallery/:sessionId.
+  finishSession: async () => {
+    const state = useStore.getState();
+    const session = state.session;
+    const userId = state.identity.authUserId;
+    if (!session || !userId) return;
+    if (session.host_id !== userId) return;
+    if (session.status === 'finished') return;
+    const { error } = await supabase
+      .from('sessions')
+      .update({ status: 'finished', finished_at: new Date().toISOString() })
+      .eq('id', session.id);
+    if (error) throw error;
+  },
+
+  // Host-only: close out an active round whose timer hit zero with no
+  // matches. Awards the hider a 50% consolation bonus (point_value / 2).
+  expireRoundNoWinner: async () => {
+    const state = useStore.getState();
+    const round = state.currentRound;
+    const session = state.session;
+    const userId = state.identity.authUserId;
+    if (!round || !session || !userId) return;
+    if (session.host_id !== userId) return;
+    if (round.status !== 'active') return;
+    const { error } = await supabase.rpc('expire_round_no_winner', {
+      p_round_id: round.id,
+    });
+    if (error) throw error;
   },
 
   setTrap: async ({ file, difficulty, hint }) => {

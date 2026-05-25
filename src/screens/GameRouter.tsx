@@ -2,17 +2,15 @@
 // session via useSession, watches the current round, and renders the right
 // in-game screen for THIS client's role.
 //
-// State graph (spec §12, this phase):
-//   round.status === 'pending'  → RoleRevealScreen (per role)
-//   round.status === 'pending', accepted locally → Capture/Hunt placeholder
-//   round.status === 'active' / 'finished' → handled in later phases
-//
-// The "accepted" flag is per-client local state; it doesn't need to be
-// synced because a player's own role progression only affects their own
-// view. The round.status flip to 'active' happens when the hider sets the
-// trap (Phase 2.2).
+// Multi-round flow (Phase 3.2):
+//   round.id change → reset `accepted` so RoleReveal runs for the new round
+//   round.status='finished' AND host AND more rounds → host calls
+//     startNextRound() after a brief result-viewing pause
+//   round.status='finished' AND host AND last round → host calls
+//     finishSession() → session.status='finished' → everyone navigates to
+//     /gallery/:sessionId
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSession } from '../hooks/useSession';
 import { useStore } from '../lib/store';
@@ -25,6 +23,8 @@ import SeekerHuntScreen from './SeekerHuntScreen';
 import VerifyingScreen from './VerifyingScreen';
 import ResultScreen from './ResultScreen';
 
+const ROUND_END_PAUSE_MS = 5_000;
+
 export default function GameRouter() {
   const { sessionId = null } = useParams<{ sessionId: string }>();
   useSession(sessionId);
@@ -34,13 +34,30 @@ export default function GameRouter() {
   const players = useStore((s) => s.players);
   const round = useStore((s) => s.currentRound);
   const authUserId = useStore((s) => s.identity.authUserId);
+  const setCurrentSubmissionId = useStore((s) => s.setCurrentSubmissionId);
+  const clearSubmissions = useStore((s) => s.clearSubmissions);
+  const startNextRound = useStore((s) => s.startNextRound);
+  const finishSession = useStore((s) => s.finishSession);
 
   const [accepted, setAccepted] = useState(false);
   const submissionId = useStore((s) => s.currentSubmissionId);
   const [submission, setSubmission] = useState<Submission | null>(null);
 
-  // Poll the seeker's own submission for status changes (covers both the
-  // local-decision instant flip and the cloud-stub's 4s timer).
+  // New round arrived (host inserted one + sessions.current_round_id flipped).
+  // Reset per-round local state so RoleReveal runs again for everyone.
+  const lastRoundId = useRef<string | null>(null);
+  useEffect(() => {
+    if (!round) return;
+    if (lastRoundId.current && lastRoundId.current !== round.id) {
+      setAccepted(false);
+      setSubmission(null);
+      setCurrentSubmissionId(null);
+      clearSubmissions();
+    }
+    lastRoundId.current = round.id;
+  }, [round?.id, setCurrentSubmissionId, clearSubmissions]);
+
+  // Poll the seeker's own submission for status changes.
   useEffect(() => {
     if (!submissionId) { setSubmission(null); return; }
     let cancelled = false;
@@ -57,8 +74,39 @@ export default function GameRouter() {
     return () => { cancelled = true; if (timer) clearTimeout(timer); };
   }, [submissionId]);
 
-  // If we somehow land here without an active session (refresh, bad URL),
-  // bounce back home so the user can re-join.
+  // Host-only: advance the game when a round finishes. After a brief pause
+  // (long enough for ResultScreen to register), either start the next round
+  // or end the session.
+  const isHost = !!session && session.host_id === authUserId;
+  const advancedForRoundRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isHost || !round || !session) return;
+    if (round.status !== 'finished') return;
+    if (advancedForRoundRef.current === round.id) return;
+    advancedForRoundRef.current = round.id;
+    const isLast = round.round_number >= session.settings.rounds_total;
+    const t = window.setTimeout(async () => {
+      try {
+        if (isLast) {
+          await finishSession();
+        } else {
+          await startNextRound();
+        }
+      } catch (e) {
+        if (import.meta.env.DEV) console.error('[GameRouter] advance failed', e);
+      }
+    }, ROUND_END_PAUSE_MS);
+    return () => window.clearTimeout(t);
+  }, [round?.id, round?.status, round?.round_number, session?.settings.rounds_total, isHost, startNextRound, finishSession, session]);
+
+  // Everyone: when session flips to 'finished', go to gallery.
+  useEffect(() => {
+    if (session?.status === 'finished' && sessionId) {
+      navigate(`/gallery/${sessionId}`);
+    }
+  }, [session?.status, sessionId, navigate]);
+
+  // Bounce back home if we land here with a mismatched session.
   useEffect(() => {
     if (sessionId && session && session.id !== sessionId) {
       navigate('/');
@@ -87,13 +135,13 @@ export default function GameRouter() {
     );
   }
 
-  // Hider: capture before the trap is set, wait after.
+  // Hider: capture pre-trap; wait while active; "round over" until host
+  // advances (handled inside HiderWaitScreen via round.status check).
   if (isHider) {
     return round.status === 'pending' ? <HiderCaptureScreen /> : <HiderWaitScreen />;
   }
 
-  // Seeker state machine: no submission yet → hunt; pending submission with
-  // photo path (cloud branch) → verifying; verified → result.
+  // Seeker state machine.
   if (submissionId) {
     if (!submission || submission.status === 'pending') {
       return submission?.photo_path || submission === null ? <VerifyingScreen /> : <SeekerHuntScreen />;
