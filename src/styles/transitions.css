@@ -1,0 +1,27 @@
+/* View Transitions — Pillar 2. SPA transitions are kicked off programmatically
+   via document.startViewTransition() in useViewTransition. The rules below
+   shape the resulting pseudo-element animations. */
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 350ms;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes stamp-in {
+  0%   { transform: rotate(-12deg) scale(0.2); opacity: 0; }
+  60%  { transform: rotate(-2deg)  scale(1.1); opacity: 1; }
+  100% { transform: rotate(-3deg)  scale(1);   opacity: 1; }
+}
+
+@keyframes stamp-out {
+  0%   { transform: rotate(-3deg) scale(1);   opacity: 1; }
+  100% { transform: rotate(0deg)  scale(0.6); opacity: 0; }
+}
+
+::view-transition-old(role-stamp) {
+  animation: stamp-out 250ms ease;
+}
+::view-transition-new(role-stamp) {
+  animation: stamp-in 400ms cubic-bezier(0.5, -0.5, 0.3, 1.5);
+}

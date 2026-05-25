@@ -1,0 +1,2119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<meta name="theme-color" content="#F4E8D0" />
+<title>SNAPHUNT — photographic hide & seek</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+:root {
+  --cream: #F4E8D0;
+  --cream-2: #EADBB8;
+  --cream-3: #DFCDA0;
+  --ink: #1A1614;
+  --ink-soft: #2A241F;
+  --forest: #1F3A2E;
+  --forest-light: #2D5240;
+  --blaze: #E94F2A;
+  --blaze-deep: #C13A18;
+  --azure: #2E5BC4;
+  --gold: #E8B547;
+  --plum: #5C2A4A;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%;
+  overscroll-behavior: none;
+  font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+}
+
+body {
+  background: var(--ink);
+  color: var(--ink);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Desktop demo frame */
+@media (min-width: 500px) {
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: 
+      radial-gradient(circle at 20% 20%, #3a2a1e 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, #1e2a3a 0%, transparent 50%),
+      #0a0a0a;
+  }
+  #app {
+    border-radius: 38px;
+    height: min(900px, calc(100vh - 40px));
+    border: 1px solid #333;
+  }
+}
+
+#app {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  height: 100%;
+  max-height: 900px;
+  margin: 0 auto;
+  background: var(--cream);
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+}
+
+/* Paper grain overlay */
+#app::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  background-image: 
+    radial-gradient(circle at 1px 1px, rgba(26,22,20,0.06) 1px, transparent 0);
+  background-size: 3px 3px;
+  mix-blend-mode: multiply;
+  opacity: 0.7;
+}
+
+/* Halftone dot pattern utility */
+.halftone {
+  background-image: radial-gradient(circle at center, var(--ink) 1px, transparent 1.5px);
+  background-size: 6px 6px;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.screen.active {
+  display: flex;
+  animation: screenIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes screenIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.screen-pad { padding: 28px 22px; flex: 1; display: flex; flex-direction: column; }
+
+/* ============ TYPOGRAPHY ============ */
+.display {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-variation-settings: 'wdth' 80, 'opsz' 96;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 0.85;
+  text-transform: uppercase;
+}
+.serif-it {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-variation-settings: 'opsz' 96, 'SOFT' 100, 'WONK' 1;
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
+.label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* ============ BUTTONS ============ */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 18px 22px;
+  border: 2px solid var(--ink);
+  background: var(--cream);
+  color: var(--ink);
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  position: relative;
+  box-shadow: 4px 4px 0 var(--ink);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  border-radius: 2px;
+  width: 100%;
+  text-transform: uppercase;
+}
+.btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+.btn-primary { background: var(--blaze); color: var(--cream); }
+.btn-primary:hover { background: var(--blaze-deep); }
+.btn-dark { background: var(--ink); color: var(--cream); }
+.btn-gold { background: var(--gold); }
+.btn-ghost { box-shadow: none; background: transparent; border-color: transparent; }
+.btn-ghost:active { transform: none; }
+.btn small { font-size: 12px; opacity: 0.7; font-weight: 500; }
+
+/* ============ STAMP ============ */
+.stamp {
+  display: inline-block;
+  padding: 4px 10px;
+  background: var(--blaze);
+  color: var(--cream);
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  transform: rotate(-2deg);
+  border-radius: 2px;
+}
+
+/* ============ COMPASS / TICKETSTUB ============ */
+.ticket {
+  border: 2px solid var(--ink);
+  background: var(--cream-2);
+  position: relative;
+  padding: 18px;
+  margin: 8px 0;
+}
+.ticket::before, .ticket::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: var(--cream);
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.ticket::before { left: -10px; }
+.ticket::after { right: -10px; }
+
+/* ============ HOME SCREEN ============ */
+#screen-home { background: var(--cream); }
+#screen-home .hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  text-align: center;
+  padding: 40px 0;
+}
+.crosshair-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+}
+.crosshair-bg svg { width: 100%; height: 100%; }
+
+.title-big {
+  font-size: clamp(60px, 16vw, 88px);
+  line-height: 0.85;
+  letter-spacing: -0.06em;
+  font-weight: 800;
+  font-variation-settings: 'wdth' 70;
+  color: var(--ink);
+  position: relative;
+  margin-bottom: 8px;
+}
+.title-big .accent {
+  color: var(--blaze);
+  display: inline-block;
+  transform: rotate(-3deg);
+}
+.title-big::after {
+  content: "";
+  position: absolute;
+  width: 60%;
+  height: 6px;
+  background: var(--ink);
+  bottom: -8px;
+  left: 20%;
+}
+
+.tagline {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 17px;
+  color: var(--ink-soft);
+  margin-top: 24px;
+  letter-spacing: 0.01em;
+}
+.tagline .ornament {
+  display: inline-block;
+  margin: 0 8px;
+  color: var(--blaze);
+}
+
+.home-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 20px 28px;
+}
+
+.home-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 22px 8px;
+  border-top: 2px dashed var(--ink);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+/* ============ HEADER BAR ============ */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px 12px;
+  border-bottom: 2px dashed var(--ink);
+}
+.topbar .back {
+  width: 38px;
+  height: 38px;
+  border: 2px solid var(--ink);
+  background: var(--cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 800;
+  border-radius: 50%;
+}
+.topbar .back:active { background: var(--ink); color: var(--cream); }
+.topbar .title {
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.topbar .right {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  background: var(--ink);
+  color: var(--cream);
+}
+
+/* ============ CREATE / LOBBY ============ */
+.code-display {
+  text-align: center;
+  padding: 20px 0;
+}
+.code-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.code-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 52px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--ink);
+  margin: 6px 0;
+}
+
+.qr-frame {
+  background: var(--cream);
+  border: 2px solid var(--ink);
+  padding: 16px;
+  margin: 12px auto;
+  width: fit-content;
+  position: relative;
+  box-shadow: 6px 6px 0 var(--ink);
+}
+.qr-frame::before {
+  content: "SCAN TO JOIN";
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--blaze);
+  color: var(--cream);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  padding: 2px 10px;
+}
+#qrcode img, #qrcode canvas { display: block; }
+
+.players-list {
+  margin-top: 16px;
+}
+.players-list .label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--cream-2);
+  border: 2px solid var(--ink);
+  margin-bottom: 8px;
+  animation: slideIn 0.35s ease;
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.player-avatar {
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.player-name {
+  flex: 1;
+  font-weight: 700;
+  font-size: 15px;
+}
+.player-badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  background: var(--gold);
+  border: 1.5px solid var(--ink);
+}
+
+/* ============ JOIN SCREEN ============ */
+.code-input-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin: 30px 0;
+}
+.code-slot {
+  aspect-ratio: 0.85;
+  border: 2px solid var(--ink);
+  background: var(--cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  text-transform: uppercase;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.code-slot.filled { background: var(--gold); }
+.code-slot.cursor {
+  background: var(--cream);
+  position: relative;
+}
+.code-slot.cursor::after {
+  content: "";
+  width: 2px;
+  height: 50%;
+  background: var(--ink);
+  animation: blink 1s infinite;
+}
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 14px;
+  background: var(--cream-2);
+  border: 2px solid var(--ink);
+  margin-top: auto;
+}
+.key {
+  aspect-ratio: 1.5;
+  background: var(--cream);
+  border: 2px solid var(--ink);
+  font-size: 22px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.key:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--ink);
+  background: var(--gold);
+}
+
+/* ============ ROLE REVEAL ============ */
+#screen-role {
+  background: var(--ink);
+  color: var(--cream);
+  align-items: center;
+  justify-content: center;
+}
+#screen-role .role-card {
+  width: 88%;
+  max-width: 340px;
+  text-align: center;
+  position: relative;
+}
+.role-title {
+  font-size: clamp(80px, 22vw, 110px);
+  line-height: 0.8;
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  font-variation-settings: 'wdth' 70;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  position: relative;
+}
+.role-title.hider { color: var(--blaze); }
+.role-title.seeker { color: var(--gold); }
+.role-desc {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 19px;
+  line-height: 1.4;
+  color: var(--cream-3);
+  margin: 16px 0 28px;
+}
+.role-stamp {
+  display: inline-block;
+  padding: 8px 18px;
+  border: 3px solid var(--cream);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  transform: rotate(-4deg);
+  margin-bottom: 28px;
+  animation: stamp 0.6s cubic-bezier(0.5, -0.5, 0.3, 1.5);
+}
+@keyframes stamp {
+  0% { opacity: 0; transform: rotate(-4deg) scale(3); }
+  60% { opacity: 1; transform: rotate(-4deg) scale(0.92); }
+  100% { transform: rotate(-4deg) scale(1); }
+}
+
+/* ============ HIDER CAPTURE ============ */
+.capture-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 22px 22px;
+}
+.capture-target {
+  flex: 1;
+  border: 2px dashed var(--ink);
+  background: var(--cream-2);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  overflow: hidden;
+  min-height: 280px;
+}
+.capture-target img,
+.capture-target video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.capture-placeholder {
+  text-align: center;
+  padding: 32px;
+}
+.capture-placeholder .crosshair-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 16px;
+  opacity: 0.4;
+}
+.capture-placeholder p {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  color: var(--ink-soft);
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.capture-corners {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.capture-corners::before,
+.capture-corners::after,
+.corners-bottom::before,
+.corners-bottom::after {
+  content: "";
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--blaze);
+}
+.capture-corners::before { top: 8px; left: 8px; border-right: 0; border-bottom: 0; }
+.capture-corners::after { top: 8px; right: 8px; border-left: 0; border-bottom: 0; }
+.corners-bottom { position: absolute; inset: 0; pointer-events: none; }
+.corners-bottom::before { bottom: 8px; left: 8px; border-right: 0; border-top: 0; }
+.corners-bottom::after { bottom: 8px; right: 8px; border-left: 0; border-top: 0; }
+
+.difficulty-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.diff-chip {
+  padding: 10px 8px;
+  border: 2px solid var(--ink);
+  background: var(--cream);
+  text-align: center;
+  cursor: pointer;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  position: relative;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.diff-chip:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.diff-chip.active { background: var(--gold); }
+.diff-chip .pts { display: block; font-size: 18px; font-weight: 800; margin-top: 2px; }
+.diff-chip .pts::before { content: "+"; }
+
+.hint-input {
+  width: 100%;
+  padding: 14px;
+  border: 2px solid var(--ink);
+  background: var(--cream);
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 15px;
+  resize: none;
+  margin-bottom: 14px;
+}
+.hint-input:focus { outline: none; background: var(--gold); }
+
+/* ============ HIDER WAIT ============ */
+.wait-illustration {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px 0;
+}
+.wait-eye {
+  width: 180px;
+  height: 180px;
+  position: relative;
+}
+.wait-eye svg { width: 100%; height: 100%; animation: float 3s ease-in-out infinite; }
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.seeker-status {
+  background: var(--cream-2);
+  border: 2px solid var(--ink);
+  padding: 14px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.seeker-distance {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 14px;
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--blaze);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.4); }
+}
+
+/* ============ SEEKER HUNT ============ */
+#screen-seeker {
+  background: var(--cream);
+}
+.hunt-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 18px;
+}
+.target-card {
+  border: 2px solid var(--ink);
+  background: var(--cream-2);
+  padding: 14px;
+  margin-bottom: 14px;
+  box-shadow: 4px 4px 0 var(--ink);
+  position: relative;
+}
+.target-photo {
+  width: 100%;
+  height: 180px;
+  background: var(--ink);
+  margin-top: 10px;
+  position: relative;
+  overflow: hidden;
+  border: 2px solid var(--ink);
+}
+.target-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: filter 0.5s ease;
+}
+.target-photo.locked img { filter: blur(20px) saturate(0.6); }
+.target-photo .reveal-meta {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: var(--ink);
+  color: var(--cream);
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.hint-strip {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 14px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--cream);
+  border-left: 4px solid var(--gold);
+  color: var(--ink);
+}
+.hint-strip .label { display: block; font-family: 'Bricolage Grotesque'; font-style: normal; font-size: 10px; margin-bottom: 4px; color: var(--ink-soft); }
+
+.radar {
+  position: relative;
+  height: 160px;
+  background: var(--ink);
+  border: 2px solid var(--ink);
+  overflow: hidden;
+  margin-bottom: 14px;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.radar-grid {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(circle at 50% 50%, transparent 0, transparent 30px, rgba(232,181,71,0.2) 31px, transparent 32px),
+    radial-gradient(circle at 50% 50%, transparent 0, transparent 60px, rgba(232,181,71,0.15) 61px, transparent 62px),
+    radial-gradient(circle at 50% 50%, transparent 0, transparent 90px, rgba(232,181,71,0.1) 91px, transparent 92px),
+    linear-gradient(0deg, transparent 49%, rgba(232,181,71,0.1) 49.5%, rgba(232,181,71,0.1) 50.5%, transparent 51%),
+    linear-gradient(90deg, transparent 49%, rgba(232,181,71,0.1) 49.5%, rgba(232,181,71,0.1) 50.5%, transparent 51%);
+}
+.radar-sweep {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(232,181,71,0.4) 90%, var(--gold) 100%);
+  transform-origin: left center;
+  animation: sweep 3s linear infinite;
+  clip-path: polygon(0 50%, 100% 0, 100% 100%);
+}
+@keyframes sweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.radar-ping {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--blaze);
+  border-radius: 50%;
+  animation: ping 1.5s ease-out infinite;
+}
+@keyframes ping {
+  0% { box-shadow: 0 0 0 0 rgba(233,79,42,0.6); }
+  100% { box-shadow: 0 0 0 20px transparent; }
+}
+.radar-info {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px;
+  color: var(--gold);
+  font-family: 'JetBrains Mono', monospace;
+  pointer-events: none;
+  z-index: 2;
+}
+.radar-info .top { display: flex; justify-content: space-between; font-size: 10px; letter-spacing: 0.15em; }
+.radar-info .distance {
+  text-align: center;
+  font-size: 38px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-shadow: 0 0 12px rgba(232,181,71,0.6);
+}
+.radar-info .distance .unit { font-size: 14px; opacity: 0.7; margin-left: 2px; }
+.radar-info .bot { display: flex; justify-content: space-between; font-size: 10px; letter-spacing: 0.15em; }
+.radar-info .temp {
+  text-align: center;
+  font-family: 'Bricolage Grotesque';
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px currentColor;
+}
+
+.action-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+.shutter-btn {
+  grid-column: span 2;
+  padding: 22px;
+  background: var(--blaze);
+  color: var(--cream);
+  border: 2px solid var(--ink);
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--ink);
+  position: relative;
+  overflow: hidden;
+}
+.shutter-btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink); }
+.shutter-btn .ring {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--cream);
+  border-radius: 50%;
+  vertical-align: middle;
+  margin-right: 12px;
+  position: relative;
+}
+.shutter-btn .ring::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  background: var(--cream);
+  border-radius: 50%;
+}
+
+.mini-btn {
+  padding: 10px;
+  border: 2px solid var(--ink);
+  background: var(--cream-2);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.mini-btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink); }
+.mini-btn .icon { font-size: 18px; }
+.mini-btn .count { font-size: 10px; opacity: 0.7; }
+
+/* ============ VERIFYING ============ */
+#screen-verify {
+  background: var(--ink);
+  color: var(--cream);
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+.verify-photos {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 30px;
+}
+.verify-photo {
+  width: 110px;
+  height: 110px;
+  border: 2px solid var(--cream);
+  position: relative;
+  overflow: hidden;
+}
+.verify-photo img { width: 100%; height: 100%; object-fit: cover; }
+.verify-photo .lbl {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--cream);
+  color: var(--ink);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-align: center;
+  padding: 2px;
+  text-transform: uppercase;
+}
+.vs {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 26px;
+  color: var(--blaze);
+}
+
+.scan-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--gold);
+  box-shadow: 0 0 12px var(--gold);
+  animation: scan 1.4s linear infinite;
+}
+@keyframes scan {
+  0% { top: 0; }
+  50% { top: 100%; }
+  51% { top: 0; }
+  100% { top: 100%; }
+}
+
+.verify-title {
+  font-size: 34px;
+  font-weight: 800;
+  font-variation-settings: 'wdth' 75;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 14px;
+  text-align: center;
+}
+.verify-step {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 17px;
+  color: var(--cream-3);
+  text-align: center;
+  margin-bottom: 24px;
+  min-height: 50px;
+}
+.verify-bar {
+  width: 100%;
+  max-width: 260px;
+  height: 10px;
+  background: var(--ink-soft);
+  border: 2px solid var(--cream);
+  overflow: hidden;
+}
+.verify-bar-fill {
+  height: 100%;
+  background: var(--gold);
+  width: 0;
+  transition: width 0.4s ease;
+}
+
+.dot-trail {
+  display: flex;
+  gap: 4px;
+  margin-top: 16px;
+}
+.dot-trail .d {
+  width: 6px;
+  height: 6px;
+  background: var(--cream);
+  border-radius: 50%;
+  opacity: 0.3;
+  animation: dotBounce 1.4s infinite;
+}
+.dot-trail .d:nth-child(2) { animation-delay: 0.15s; }
+.dot-trail .d:nth-child(3) { animation-delay: 0.3s; }
+.dot-trail .d:nth-child(4) { animation-delay: 0.45s; }
+.dot-trail .d:nth-child(5) { animation-delay: 0.6s; }
+@keyframes dotBounce {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.4); }
+}
+
+/* ============ RESULT ============ */
+.result-banner {
+  text-align: center;
+  padding: 28px 22px 16px;
+  position: relative;
+}
+.result-banner.match { background: var(--forest); color: var(--cream); }
+.result-banner.no-match { background: var(--blaze); color: var(--cream); }
+.result-status {
+  font-size: 60px;
+  line-height: 0.85;
+  font-weight: 800;
+  font-variation-settings: 'wdth' 70;
+  text-transform: uppercase;
+  letter-spacing: -0.04em;
+}
+.result-similarity {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  margin-top: 8px;
+  letter-spacing: 0.15em;
+  opacity: 0.85;
+}
+.result-points {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 8px 18px;
+  background: var(--gold);
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 22px;
+  border: 2px solid var(--ink);
+  transform: rotate(-3deg);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.result-body {
+  padding: 22px;
+}
+.result-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.result-comparison .cell {
+  border: 2px solid var(--ink);
+  aspect-ratio: 1;
+  position: relative;
+  overflow: hidden;
+}
+.result-comparison .cell img { width: 100%; height: 100%; object-fit: cover; }
+.result-comparison .cell .lbl {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--ink);
+  color: var(--cream);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  padding: 4px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.ai-verdict {
+  border: 2px solid var(--ink);
+  background: var(--cream-2);
+  padding: 16px;
+  margin-bottom: 16px;
+  position: relative;
+}
+.ai-verdict::before {
+  content: "AI VERDICT";
+  position: absolute;
+  top: -10px;
+  left: 14px;
+  background: var(--ink);
+  color: var(--cream);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  padding: 2px 8px;
+}
+.ai-verdict p {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+/* ============ GALLERY ============ */
+.gallery-grid {
+  padding: 20px 18px;
+}
+.recap-card {
+  border: 2px solid var(--ink);
+  background: var(--cream-2);
+  padding: 14px;
+  margin-bottom: 14px;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.recap-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.recap-round {
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.recap-photos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.recap-photos .ph {
+  aspect-ratio: 1;
+  border: 1.5px solid var(--ink);
+  overflow: hidden;
+  position: relative;
+}
+.recap-photos .ph img { width: 100%; height: 100%; object-fit: cover; }
+.recap-photos .ph .stamp-mini {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: var(--cream);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  padding: 2px 5px;
+  border: 1px solid var(--ink);
+}
+
+.scoreboard {
+  margin-top: 8px;
+  padding: 16px;
+  background: var(--ink);
+  color: var(--cream);
+}
+.scoreboard .label {
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.score-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--cream-3);
+}
+.score-row:last-child { border: 0; }
+.score-row .rank { font-family: 'JetBrains Mono'; opacity: 0.6; margin-right: 10px; }
+.score-row .name { font-weight: 700; flex: 1; }
+.score-row .pts { font-family: 'JetBrains Mono'; font-weight: 700; color: var(--gold); }
+.score-row.you .name { color: var(--gold); }
+
+/* ============ DEMO BAR ============ */
+#demo-bar {
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+#demo-bar button.toggle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--gold);
+  border: 2px solid var(--gold);
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  font-size: 18px;
+}
+#demo-panel {
+  display: none;
+  background: var(--ink);
+  color: var(--cream);
+  border: 2px solid var(--gold);
+  padding: 8px;
+  max-height: 360px;
+  overflow-y: auto;
+  width: 200px;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+#demo-panel.open { display: flex; }
+#demo-panel .h {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  padding: 4px 6px;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+#demo-panel button {
+  padding: 8px 10px;
+  background: transparent;
+  color: var(--cream);
+  border: 1px solid #555;
+  text-align: left;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+#demo-panel button:hover { background: #222; border-color: var(--gold); }
+
+/* ============ TOAST ============ */
+.toast {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--cream);
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  z-index: 200;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  border: 2px solid var(--gold);
+}
+.toast.show { opacity: 1; }
+
+/* Hidden file input */
+.hidden-input { position: absolute; left: -9999px; opacity: 0; pointer-events: none; }
+
+.flash {
+  position: absolute;
+  inset: 0;
+  background: var(--cream);
+  z-index: 500;
+  pointer-events: none;
+  opacity: 0;
+}
+.flash.fire { animation: flash 0.4s ease; }
+@keyframes flash {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Pulse animation for new players */
+.new-pulse { animation: newPulse 1s ease; }
+@keyframes newPulse {
+  0% { background: var(--gold); }
+  100% { background: var(--cream-2); }
+}
+
+/* No-scroll utility */
+.no-scroll { overflow: hidden; }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ========== HOME ========== -->
+  <section class="screen active" id="screen-home">
+    <div class="screen-pad">
+      <div class="topbar" style="border:0; padding-bottom: 0;">
+        <span class="label" style="color: var(--blaze);">▲ v0.3 prototype</span>
+        <span class="label">est. 2026</span>
+      </div>
+      <div class="hero">
+        <div class="crosshair-bg">
+          <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="200" cy="200" r="120" fill="none" stroke="#1A1614" stroke-width="1.5" stroke-dasharray="4 6" opacity="0.4"/>
+            <circle cx="200" cy="200" r="80" fill="none" stroke="#1A1614" stroke-width="1.5" opacity="0.3"/>
+            <circle cx="200" cy="200" r="40" fill="none" stroke="#E94F2A" stroke-width="2" opacity="0.6"/>
+            <line x1="200" y1="40" x2="200" y2="360" stroke="#1A1614" stroke-width="1" opacity="0.2"/>
+            <line x1="40" y1="200" x2="360" y2="200" stroke="#1A1614" stroke-width="1" opacity="0.2"/>
+          </svg>
+        </div>
+        <h1 class="title-big">SNAP<br/><span class="accent">HUNT</span></h1>
+        <p class="tagline">photographic <span class="ornament">✦</span> hide &amp; seek</p>
+      </div>
+      <div class="home-cta">
+        <button class="btn btn-primary" onclick="goTo('create')">
+          <span>▶ START A HUNT</span>
+        </button>
+        <button class="btn btn-dark" onclick="goTo('join')">
+          ◉ JOIN WITH CODE
+        </button>
+      </div>
+      <div class="home-meta">
+        <span>3 friends min.</span>
+        <span>·</span>
+        <span>outdoors recommended</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== CREATE / LOBBY ========== -->
+  <section class="screen" id="screen-create">
+    <div class="topbar">
+      <div class="back" onclick="goTo('home')">←</div>
+      <div class="title">Hunt Lobby</div>
+      <div class="right">Host</div>
+    </div>
+    <div class="screen-pad">
+      <div class="code-display">
+        <div class="code-label">Share this code</div>
+        <div class="code-value" id="lobby-code">FOXHUNT</div>
+        <div class="qr-frame">
+          <div id="qrcode"></div>
+        </div>
+      </div>
+
+      <div class="players-list">
+        <div class="label-row">
+          <span class="label">Players Joined</span>
+          <span class="label" id="player-count">1 / 8</span>
+        </div>
+        <div id="players-container">
+          <div class="player-row">
+            <div class="player-avatar" style="background: var(--gold);">🦊</div>
+            <div class="player-name">You</div>
+            <div class="player-badge">Host</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: auto; padding-top: 20px;">
+        <button class="btn btn-primary" id="start-hunt-btn" onclick="startHunt()">
+          BEGIN THE HUNT →
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== JOIN ========== -->
+  <section class="screen" id="screen-join">
+    <div class="topbar">
+      <div class="back" onclick="goTo('home')">←</div>
+      <div class="title">Join a Hunt</div>
+      <div class="right">Guest</div>
+    </div>
+    <div class="screen-pad" style="padding-bottom: 14px;">
+      <div style="text-align: center; margin: 8px 0 4px;">
+        <span class="label" style="color: var(--ink-soft);">Enter 6-character code</span>
+      </div>
+      <div class="code-input-grid" id="code-grid">
+        <div class="code-slot cursor"></div>
+        <div class="code-slot"></div>
+        <div class="code-slot"></div>
+        <div class="code-slot"></div>
+        <div class="code-slot"></div>
+        <div class="code-slot"></div>
+      </div>
+      <div style="text-align: center; margin: 4px 0 14px;">
+        <button class="btn btn-ghost" style="display: inline-flex; width: auto; padding: 10px 18px; font-size: 12px;" onclick="quickJoin()">
+          ⌖ SCAN QR CODE INSTEAD
+        </button>
+      </div>
+      <div class="keypad">
+        <button class="key" onclick="typeCode('1')">1</button>
+        <button class="key" onclick="typeCode('2')">2</button>
+        <button class="key" onclick="typeCode('3')">3</button>
+        <button class="key" onclick="typeCode('4')">4</button>
+        <button class="key" onclick="typeCode('5')">5</button>
+        <button class="key" onclick="typeCode('6')">6</button>
+        <button class="key" onclick="typeCode('7')">7</button>
+        <button class="key" onclick="typeCode('8')">8</button>
+        <button class="key" onclick="typeCode('9')">9</button>
+        <button class="key" onclick="typeCode('A')">A</button>
+        <button class="key" onclick="typeCode('0')">0</button>
+        <button class="key" onclick="typeCode('DEL')">⌫</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== ROLE REVEAL ========== -->
+  <section class="screen" id="screen-role">
+    <div class="role-card">
+      <div class="role-stamp" id="role-stamp">★ ASSIGNMENT ★</div>
+      <h1 class="role-title" id="role-title">HIDER</h1>
+      <p class="role-desc" id="role-desc">Find an object. Photograph it. Hope no one finds it before time runs out.</p>
+      <button class="btn btn-gold" onclick="enterRole()" style="max-width: 240px; margin: 0 auto;">
+        ACCEPT MISSION
+      </button>
+    </div>
+  </section>
+
+  <!-- ========== HIDER: CAPTURE ========== -->
+  <section class="screen" id="screen-hider">
+    <div class="topbar">
+      <div class="back" onclick="goTo('home')">←</div>
+      <div class="title">Hide Something</div>
+      <div class="right" style="background: var(--blaze);">Hider</div>
+    </div>
+    <div class="capture-area">
+      <div class="capture-target" id="capture-target">
+        <div class="capture-corners"></div>
+        <div class="corners-bottom"></div>
+        <div class="capture-placeholder" id="capture-placeholder">
+          <svg class="crosshair-icon" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="40" cy="40" r="30" fill="none" stroke="#1A1614" stroke-width="2"/>
+            <circle cx="40" cy="40" r="6" fill="#E94F2A"/>
+            <line x1="40" y1="5" x2="40" y2="20" stroke="#1A1614" stroke-width="2"/>
+            <line x1="40" y1="60" x2="40" y2="75" stroke="#1A1614" stroke-width="2"/>
+            <line x1="5" y1="40" x2="20" y2="40" stroke="#1A1614" stroke-width="2"/>
+            <line x1="60" y1="40" x2="75" y2="40" stroke="#1A1614" stroke-width="2"/>
+          </svg>
+          <p>Find a fixed, distinctive object. <br/>Frame it well. Snap it.</p>
+        </div>
+        <img id="hider-preview" style="display:none" alt="">
+      </div>
+
+      <input type="file" accept="image/*" capture="environment" class="hidden-input" id="hider-file" onchange="handleHiderPhoto(this)">
+
+      <div style="margin-bottom: 14px;">
+        <span class="label" style="display: block; margin-bottom: 8px;">Difficulty Tier</span>
+        <div class="difficulty-row">
+          <div class="diff-chip active" data-diff="easy" onclick="setDiff('easy')">
+            Easy<span class="pts">50</span>
+          </div>
+          <div class="diff-chip" data-diff="medium" onclick="setDiff('medium')">
+            Medium<span class="pts">100</span>
+          </div>
+          <div class="diff-chip" data-diff="hard" onclick="setDiff('hard')">
+            Legendary<span class="pts">250</span>
+          </div>
+        </div>
+      </div>
+
+      <textarea class="hint-input" id="hider-hint" placeholder="Optional hint — leave a clue for the seekers..." rows="2"></textarea>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <button class="btn btn-dark" onclick="document.getElementById('hider-file').click()">
+          📷 CAPTURE
+        </button>
+        <button class="btn btn-primary" onclick="setTrap()">
+          SET TRAP →
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== HIDER: WAIT ========== -->
+  <section class="screen" id="screen-wait">
+    <div class="topbar">
+      <div class="back" onclick="goTo('home')">←</div>
+      <div class="title">Trap Active</div>
+      <div class="right" style="background: var(--blaze);">Hider</div>
+    </div>
+    <div class="screen-pad">
+      <div style="text-align: center; padding: 12px 0;">
+        <div class="stamp">TRAP SET</div>
+        <h2 class="display" style="font-size: 38px; margin-top: 14px; line-height: 0.9;">SEEKERS<br/>ARE OUT THERE.</h2>
+        <p class="tagline" style="margin-top: 12px;">Watch them squirm <span class="ornament">✦</span> 4:32 left</p>
+      </div>
+
+      <div class="wait-illustration">
+        <div class="wait-eye">
+          <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="100" cy="100" rx="90" ry="55" fill="none" stroke="#1A1614" stroke-width="4"/>
+            <circle cx="100" cy="100" r="40" fill="#E94F2A"/>
+            <circle cx="100" cy="100" r="20" fill="#1A1614"/>
+            <circle cx="92" cy="92" r="6" fill="#F4E8D0"/>
+            <path d="M 30 100 Q 100 50 170 100" fill="none" stroke="#1A1614" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+          </svg>
+        </div>
+      </div>
+
+      <div>
+        <span class="label" style="display: block; margin-bottom: 10px;">Live Tracking</span>
+        <div class="seeker-status">
+          <div class="status-dot"></div>
+          <span style="font-weight: 700;">🦌 Maya</span>
+          <span class="seeker-distance">62m · warm</span>
+        </div>
+        <div class="seeker-status">
+          <div class="status-dot" style="background: var(--gold);"></div>
+          <span style="font-weight: 700;">🦅 Jordan</span>
+          <span class="seeker-distance">180m · cold</span>
+        </div>
+        <div class="seeker-status">
+          <div class="status-dot" style="background: var(--blaze);"></div>
+          <span style="font-weight: 700;">🐝 Sam</span>
+          <span class="seeker-distance">15m · BURNING</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== SEEKER: HUNT ========== -->
+  <section class="screen" id="screen-seeker">
+    <div class="topbar">
+      <div class="back" onclick="goTo('home')">←</div>
+      <div class="title">Active Hunt</div>
+      <div class="right" style="background: var(--gold); color: var(--ink);">Seeker</div>
+    </div>
+    <div class="hunt-main">
+      <div class="target-card">
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <span class="label">Target Object</span>
+          <span class="label" style="color: var(--blaze);">★ 100 PTS</span>
+        </div>
+        <div class="target-photo locked" id="target-photo">
+          <img src="https://images.unsplash.com/photo-1517022812141-23620dba5c23?w=400&h=300&fit=crop" alt="Target">
+          <div class="reveal-meta" id="reveal-meta">RESOLUTION: 4%</div>
+        </div>
+        <div class="hint-strip">
+          <span class="label">Hider's Hint</span>
+          where the lazy ones rest after a long walk
+        </div>
+      </div>
+
+      <div class="radar">
+        <div class="radar-grid"></div>
+        <div class="radar-sweep"></div>
+        <div class="radar-ping" style="top: 35%; left: 65%;"></div>
+        <div class="radar-info">
+          <div class="top">
+            <span>◉ TRACKING</span>
+            <span id="radar-acc">±5m</span>
+          </div>
+          <div>
+            <div class="distance"><span id="dist-val">62</span><span class="unit">m</span></div>
+            <div class="temp" id="temp-readout" style="color: var(--gold);">⚠ WARMING UP</div>
+          </div>
+          <div class="bot">
+            <span>HEADING NE</span>
+            <span id="hunt-timer">04:32</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="mini-btn" onclick="useHint()">
+          <span class="icon">💡</span>
+          <span>USE HINT</span>
+          <span class="count">2 left</span>
+        </button>
+        <button class="mini-btn" onclick="revealMore()">
+          <span class="icon">🔍</span>
+          <span>SHARPEN</span>
+          <span class="count">1 left</span>
+        </button>
+        <button class="shutter-btn" onclick="document.getElementById('seeker-file').click()">
+          <span class="ring"></span>SUBMIT FINDING
+        </button>
+      </div>
+
+      <input type="file" accept="image/*" capture="environment" class="hidden-input" id="seeker-file" onchange="handleSeekerPhoto(this)">
+    </div>
+  </section>
+
+  <!-- ========== VERIFYING ========== -->
+  <section class="screen" id="screen-verify">
+    <div class="verify-photos">
+      <div class="verify-photo">
+        <img id="verify-hider" src="https://images.unsplash.com/photo-1517022812141-23620dba5c23?w=200" alt="">
+        <div class="scan-line"></div>
+        <div class="lbl">Target</div>
+      </div>
+      <div class="vs">vs.</div>
+      <div class="verify-photo">
+        <img id="verify-seeker" src="https://images.unsplash.com/photo-1611348586804-61bf6c080437?w=200" alt="">
+        <div class="scan-line" style="animation-delay: 0.7s;"></div>
+        <div class="lbl">Yours</div>
+      </div>
+    </div>
+    <h2 class="verify-title">Cross-Referencing</h2>
+    <p class="verify-step" id="verify-step">Examining the evidence…</p>
+    <div class="verify-bar"><div class="verify-bar-fill" id="verify-bar"></div></div>
+    <div class="dot-trail">
+      <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+    </div>
+  </section>
+
+  <!-- ========== RESULT ========== -->
+  <section class="screen" id="screen-result">
+    <div class="result-banner match" id="result-banner">
+      <div class="result-status" id="result-status">A MATCH!</div>
+      <div class="result-similarity" id="result-sim">SIMILARITY · 94%</div>
+      <div class="result-points" id="result-pts">+100</div>
+    </div>
+    <div class="result-body">
+      <div class="result-comparison">
+        <div class="cell">
+          <img id="result-hider-img" src="https://images.unsplash.com/photo-1517022812141-23620dba5c23?w=300" alt="">
+          <div class="lbl">Target</div>
+        </div>
+        <div class="cell">
+          <img id="result-seeker-img" src="https://images.unsplash.com/photo-1611348586804-61bf6c080437?w=300" alt="">
+          <div class="lbl">Yours</div>
+        </div>
+      </div>
+      <div class="ai-verdict">
+        <p id="ai-reasoning">"Both photos show the same wooden park bench with weathered green slats. The unique knot pattern on the third plank confirms it — and you're standing 4 metres from the original GPS pin. Verified."</p>
+      </div>
+      <button class="btn btn-primary" onclick="goTo('gallery')">SEE THE FINAL TALLY →</button>
+      <button class="btn btn-ghost" style="margin-top: 8px;" onclick="goTo('home')">Exit to lobby</button>
+    </div>
+  </section>
+
+  <!-- ========== GALLERY ========== -->
+  <section class="screen" id="screen-gallery">
+    <div class="topbar">
+      <div class="back" onclick="goTo('home')">←</div>
+      <div class="title">Hunt Recap</div>
+      <div class="right">Final</div>
+    </div>
+    <div class="gallery-grid">
+      <div style="text-align: center; margin-bottom: 18px;">
+        <h2 class="display" style="font-size: 38px; line-height: 0.9;">THE<br/>SOUVENIRS</h2>
+        <p class="tagline">every match, every miss</p>
+      </div>
+
+      <div class="recap-card">
+        <div class="recap-header">
+          <span class="recap-round">Round 01 · Sam hid</span>
+          <span class="stamp">MATCH</span>
+        </div>
+        <div class="recap-photos">
+          <div class="ph">
+            <img src="https://images.unsplash.com/photo-1517022812141-23620dba5c23?w=300" alt="">
+            <div class="stamp-mini">TARGET</div>
+          </div>
+          <div class="ph">
+            <img src="https://images.unsplash.com/photo-1611348586804-61bf6c080437?w=300" alt="">
+            <div class="stamp-mini">FOUND</div>
+          </div>
+        </div>
+        <p style="font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; margin-top: 10px; line-height: 1.4;">"Identical green park bench — verified by knot pattern. Maya nailed it in 2:14."</p>
+      </div>
+
+      <div class="recap-card">
+        <div class="recap-header">
+          <span class="recap-round">Round 02 · Maya hid</span>
+          <span class="stamp" style="background: var(--ink);">NO MATCH</span>
+        </div>
+        <div class="recap-photos">
+          <div class="ph">
+            <img src="https://images.unsplash.com/photo-1602080858428-57174f9431cf?w=300" alt="">
+            <div class="stamp-mini">TARGET</div>
+          </div>
+          <div class="ph">
+            <img src="https://images.unsplash.com/photo-1571079570759-18bf3c54e7e7?w=300" alt="">
+            <div class="stamp-mini">CLOSE</div>
+          </div>
+        </div>
+        <p style="font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; margin-top: 10px; line-height: 1.4;">"Both are red bicycles, but the frame geometry differs. Nice try, Jordan."</p>
+      </div>
+
+      <div class="recap-card">
+        <div class="recap-header">
+          <span class="recap-round">Round 03 · You hid</span>
+          <span class="stamp">LEGENDARY</span>
+        </div>
+        <div class="recap-photos">
+          <div class="ph">
+            <img src="https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=300" alt="">
+            <div class="stamp-mini">TARGET</div>
+          </div>
+          <div class="ph">
+            <img src="https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?w=300" alt="">
+            <div class="stamp-mini">FOUND</div>
+          </div>
+        </div>
+        <p style="font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; margin-top: 10px; line-height: 1.4;">"It took 6 minutes but Sam found that lighthouse weather vane. Cruel, brilliant hide."</p>
+      </div>
+    </div>
+
+    <div class="scoreboard">
+      <div class="label">★ FINAL STANDINGS ★</div>
+      <div class="score-row you">
+        <span class="rank">01</span>
+        <span class="name">You 🦊</span>
+        <span class="pts">450 pts</span>
+      </div>
+      <div class="score-row">
+        <span class="rank">02</span>
+        <span class="name">Maya 🦌</span>
+        <span class="pts">320 pts</span>
+      </div>
+      <div class="score-row">
+        <span class="rank">03</span>
+        <span class="name">Sam 🐝</span>
+        <span class="pts">280 pts</span>
+      </div>
+      <div class="score-row">
+        <span class="rank">04</span>
+        <span class="name">Jordan 🦅</span>
+        <span class="pts">150 pts</span>
+      </div>
+    </div>
+    <div style="padding: 18px;">
+      <button class="btn btn-primary" onclick="goTo('home')">PLAY AGAIN →</button>
+    </div>
+  </section>
+
+  <div class="toast" id="toast"></div>
+  <div class="flash" id="flash"></div>
+</div>
+
+<!-- Demo navigation -->
+<div id="demo-bar">
+  <div id="demo-panel">
+    <div class="h">JUMP TO SCREEN</div>
+    <button onclick="goTo('home')">→ Home</button>
+    <button onclick="goTo('create')">→ Create / Lobby</button>
+    <button onclick="goTo('join')">→ Join</button>
+    <button onclick="goTo('role'); revealRole('hider')">→ Role Reveal (Hider)</button>
+    <button onclick="goTo('role'); revealRole('seeker')">→ Role Reveal (Seeker)</button>
+    <button onclick="goTo('hider')">→ Hider Capture</button>
+    <button onclick="goTo('wait')">→ Hider Wait</button>
+    <button onclick="goTo('seeker')">→ Seeker Hunt</button>
+    <button onclick="goTo('verify'); runVerify()">→ AI Verify</button>
+    <button onclick="goTo('result'); showResult(true)">→ Result (match)</button>
+    <button onclick="goTo('result'); showResult(false)">→ Result (no match)</button>
+    <button onclick="goTo('gallery')">→ Gallery</button>
+  </div>
+  <button class="toggle" onclick="document.getElementById('demo-panel').classList.toggle('open')">◆</button>
+</div>
+
+<script>
+// ============ STATE ============
+const state = {
+  currentScreen: 'home',
+  role: null,
+  difficulty: 'easy',
+  hiderPhoto: null,
+  seekerPhoto: null,
+  hiderHint: '',
+  joinCode: '',
+  distance: 62,
+  revealLevel: 0
+};
+
+const SAMPLE_HIDER_PHOTOS = [
+  'https://images.unsplash.com/photo-1517022812141-23620dba5c23?w=400',
+  'https://images.unsplash.com/photo-1602080858428-57174f9431cf?w=400',
+  'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400'
+];
+
+// ============ SCREEN ROUTING ============
+function goTo(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + screen).classList.add('active');
+  state.currentScreen = screen;
+  document.getElementById('demo-panel').classList.remove('open');
+  
+  // screen-specific init
+  if (screen === 'create') initLobby();
+  if (screen === 'seeker') startSeekerSim();
+}
+
+// ============ TOAST ============
+function toast(msg, duration = 2200) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ============ SOUND (subtle blips) ============
+let audioCtx;
+function blip(freq = 600, duration = 0.06, type = 'square') {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  } catch(e) {}
+}
+
+document.addEventListener('click', e => {
+  if (e.target.closest('button, .btn, .key, .diff-chip, .mini-btn')) {
+    blip(800, 0.04, 'sine');
+  }
+});
+
+// ============ LOBBY ============
+function initLobby() {
+  const code = 'SH' + Math.random().toString(36).substring(2, 6).toUpperCase();
+  document.getElementById('lobby-code').textContent = code;
+  
+  // Generate QR
+  const qr = document.getElementById('qrcode');
+  qr.innerHTML = '';
+  try {
+    new QRCode(qr, {
+      text: 'https://snaphunt.app/join/' + code,
+      width: 140,
+      height: 140,
+      colorDark: '#1A1614',
+      colorLight: '#F4E8D0',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch(e) {
+    qr.innerHTML = '<div style="width:140px;height:140px;background:#1A1614;color:#F4E8D0;display:flex;align-items:center;justify-content:center;">QR</div>';
+  }
+  
+  // Simulate players joining
+  const players = [
+    { name: 'Maya', emoji: '🦌', delay: 1200 },
+    { name: 'Jordan', emoji: '🦅', delay: 2800 },
+    { name: 'Sam', emoji: '🐝', delay: 4400 }
+  ];
+  const container = document.getElementById('players-container');
+  // Clear existing simulated
+  const host = container.firstElementChild;
+  container.innerHTML = '';
+  container.appendChild(host);
+  
+  players.forEach(p => {
+    setTimeout(() => {
+      if (state.currentScreen !== 'create') return;
+      const row = document.createElement('div');
+      row.className = 'player-row new-pulse';
+      row.innerHTML = `
+        <div class="player-avatar" style="background: var(--cream-3);">${p.emoji}</div>
+        <div class="player-name">${p.name}</div>
+        <div class="player-badge" style="background: var(--cream-2);">Joined</div>
+      `;
+      container.appendChild(row);
+      const count = container.children.length;
+      document.getElementById('player-count').textContent = count + ' / 8';
+      blip(880, 0.08, 'sine');
+    }, p.delay);
+  });
+}
+
+function startHunt() {
+  toast('Starting hunt…');
+  setTimeout(() => {
+    // 50/50 role
+    const role = Math.random() > 0.5 ? 'hider' : 'seeker';
+    revealRole(role);
+    goTo('role');
+  }, 800);
+}
+
+// ============ ROLE REVEAL ============
+function revealRole(role) {
+  state.role = role;
+  const title = document.getElementById('role-title');
+  const desc = document.getElementById('role-desc');
+  const stamp = document.getElementById('role-stamp');
+  title.className = 'role-title ' + role;
+  if (role === 'hider') {
+    title.textContent = 'HIDER';
+    desc.textContent = 'Find an object. Photograph it. Hope no one finds it before time runs out.';
+    stamp.textContent = '★ ASSIGNMENT ★';
+  } else {
+    title.textContent = 'SEEKER';
+    desc.textContent = 'Track them down. Photograph their object. Be the first to prove it.';
+    stamp.textContent = '★ MISSION ★';
+  }
+  setTimeout(() => blip(440, 0.2, 'triangle'), 200);
+  setTimeout(() => blip(660, 0.2, 'triangle'), 350);
+}
+
+function enterRole() {
+  if (state.role === 'hider') goTo('hider');
+  else goTo('seeker');
+}
+
+// ============ HIDER ============
+function setDiff(d) {
+  state.difficulty = d;
+  document.querySelectorAll('.diff-chip').forEach(c => c.classList.remove('active'));
+  document.querySelector(`.diff-chip[data-diff="${d}"]`).classList.add('active');
+}
+
+function handleHiderPhoto(input) {
+  const f = input.files && input.files[0];
+  if (!f) return;
+  const url = URL.createObjectURL(f);
+  state.hiderPhoto = url;
+  const img = document.getElementById('hider-preview');
+  img.src = url;
+  img.style.display = 'block';
+  document.getElementById('capture-placeholder').style.display = 'none';
+  // Flash
+  const flash = document.getElementById('flash');
+  flash.classList.remove('fire');
+  void flash.offsetWidth;
+  flash.classList.add('fire');
+  blip(1200, 0.08);
+  toast('Captured');
+}
+
+function setTrap() {
+  if (!state.hiderPhoto) {
+    // Use a sample so demo flow works
+    state.hiderPhoto = SAMPLE_HIDER_PHOTOS[0];
+  }
+  state.hiderHint = document.getElementById('hider-hint').value || 'where the lazy ones rest after a long walk';
+  
+  // Try geolocation in background
+  if ('geolocation' in navigator) {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        state.coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      },
+      () => {},
+      { timeout: 4000 }
+    );
+  }
+  
+  toast('Trap armed · GPS pinned');
+  setTimeout(() => goTo('wait'), 800);
+}
+
+// ============ SEEKER ============
+let seekerInterval;
+function startSeekerSim() {
+  state.distance = 62;
+  state.revealLevel = 0;
+  updateRadar();
+  clearInterval(seekerInterval);
+  seekerInterval = setInterval(() => {
+    if (state.currentScreen !== 'seeker') {
+      clearInterval(seekerInterval);
+      return;
+    }
+    // Random walk towards
+    const delta = Math.random() * 16 - 6;
+    state.distance = Math.max(4, Math.min(220, state.distance + delta));
+    updateRadar();
+  }, 1400);
+}
+
+function updateRadar() {
+  const d = Math.round(state.distance);
+  document.getElementById('dist-val').textContent = d;
+  const tempEl = document.getElementById('temp-readout');
+  let label, color;
+  if (d < 12) { label = '🔥 BURNING'; color = '#E94F2A'; }
+  else if (d < 40) { label = '⚠ HOT'; color = '#E8B547'; }
+  else if (d < 100) { label = '↑ WARM'; color = '#E8B547'; }
+  else if (d < 180) { label = '↓ COLD'; color = '#9BB7D4'; }
+  else { label = '✦ FROZEN'; color = '#9BB7D4'; }
+  tempEl.textContent = label;
+  tempEl.style.color = color;
+}
+
+function useHint() {
+  toast('Hint revealed · check the photo');
+  blip(700, 0.1, 'triangle');
+}
+
+function revealMore() {
+  state.revealLevel++;
+  const tp = document.getElementById('target-photo');
+  const m = document.getElementById('reveal-meta');
+  if (state.revealLevel === 1) {
+    tp.querySelector('img').style.filter = 'blur(10px) saturate(0.8)';
+    m.textContent = 'RESOLUTION: 35%';
+  } else if (state.revealLevel === 2) {
+    tp.querySelector('img').style.filter = 'blur(4px)';
+    m.textContent = 'RESOLUTION: 72%';
+  } else {
+    tp.querySelector('img').style.filter = 'none';
+    m.textContent = 'RESOLUTION: 100%';
+    tp.classList.remove('locked');
+  }
+  blip(1000, 0.1);
+  toast('Photo sharpened');
+}
+
+function handleSeekerPhoto(input) {
+  const f = input.files && input.files[0];
+  if (!f) {
+    runVerifyAndResult();
+    return;
+  }
+  const url = URL.createObjectURL(f);
+  state.seekerPhoto = url;
+  document.getElementById('verify-seeker').src = url;
+  document.getElementById('result-seeker-img').src = url;
+  runVerifyAndResult();
+}
+
+function runVerifyAndResult() {
+  // Set hider photo for verify display
+  const hp = state.hiderPhoto || SAMPLE_HIDER_PHOTOS[0];
+  document.getElementById('verify-hider').src = hp;
+  document.getElementById('result-hider-img').src = hp;
+  if (!state.seekerPhoto) {
+    document.getElementById('verify-seeker').src = 'https://images.unsplash.com/photo-1611348586804-61bf6c080437?w=300';
+    document.getElementById('result-seeker-img').src = 'https://images.unsplash.com/photo-1611348586804-61bf6c080437?w=300';
+  }
+  goTo('verify');
+  runVerify();
+}
+
+// ============ VERIFY ============
+function runVerify() {
+  const steps = [
+    'Examining the evidence…',
+    'Cross-referencing pixels…',
+    'Triangulating GPS coordinates…',
+    'Consulting the oracle…',
+    'Rendering a verdict…'
+  ];
+  const stepEl = document.getElementById('verify-step');
+  const bar = document.getElementById('verify-bar');
+  bar.style.width = '0%';
+  let i = 0;
+  stepEl.textContent = steps[0];
+  bar.style.width = '20%';
+  const interval = setInterval(() => {
+    i++;
+    if (i >= steps.length) {
+      clearInterval(interval);
+      bar.style.width = '100%';
+      setTimeout(() => {
+        // Show result (random match weighted toward yes)
+        showResult(Math.random() > 0.3);
+      }, 700);
+      return;
+    }
+    stepEl.textContent = steps[i];
+    bar.style.width = (20 + (i / steps.length) * 80) + '%';
+    blip(600 + i * 80, 0.05);
+  }, 900);
+}
+
+// ============ RESULT ============
+function showResult(isMatch) {
+  goTo('result');
+  const banner = document.getElementById('result-banner');
+  const status = document.getElementById('result-status');
+  const sim = document.getElementById('result-sim');
+  const pts = document.getElementById('result-pts');
+  const reasoning = document.getElementById('ai-reasoning');
+  
+  if (isMatch) {
+    banner.className = 'result-banner match';
+    status.textContent = 'A MATCH!';
+    const score = 80 + Math.floor(Math.random() * 19);
+    sim.textContent = `SIMILARITY · ${score}%`;
+    pts.textContent = '+' + (state.difficulty === 'hard' ? 250 : state.difficulty === 'medium' ? 100 : 50);
+    pts.style.display = 'inline-block';
+    const matchReasons = [
+      '"Both photos show the same wooden park bench with weathered green slats. The unique knot pattern on the third plank confirms it — and you\'re standing 4 metres from the original GPS pin. Verified."',
+      '"Distinctive markings line up: the same scratch on the lower-left corner, the same shadow direction (give or take 20 minutes of sun). GPS within 6m. This is the object."',
+      '"Identical subject — same texture, same proportions, same wear pattern. Location matches. Excellent work."'
+    ];
+    reasoning.textContent = matchReasons[Math.floor(Math.random() * matchReasons.length)];
+    setTimeout(() => { blip(523, 0.15, 'triangle'); setTimeout(() => blip(659, 0.15, 'triangle'), 100); setTimeout(() => blip(784, 0.25, 'triangle'), 200); }, 200);
+  } else {
+    banner.className = 'result-banner no-match';
+    status.textContent = 'NOT QUITE.';
+    const score = 30 + Math.floor(Math.random() * 30);
+    sim.textContent = `SIMILARITY · ${score}%`;
+    pts.style.display = 'none';
+    const noReasons = [
+      '"Visually similar but not the same object. The handle curvature differs, and you\'re 80m from the target zone. Close — try the next block."',
+      '"Both are red bicycles, but the frame geometry differs. Look for the one with a basket on the front."',
+      '"Same category, different specimen. The original has a sticker on the side. Keep hunting."'
+    ];
+    reasoning.textContent = noReasons[Math.floor(Math.random() * noReasons.length)];
+    setTimeout(() => blip(220, 0.4, 'sawtooth'), 200);
+  }
+}
+
+// ============ JOIN ============
+function typeCode(k) {
+  const slots = document.querySelectorAll('#code-grid .code-slot');
+  if (k === 'DEL') {
+    if (state.joinCode.length === 0) return;
+    state.joinCode = state.joinCode.slice(0, -1);
+  } else if (state.joinCode.length < 6) {
+    state.joinCode += k;
+  }
+  slots.forEach((s, i) => {
+    s.textContent = state.joinCode[i] || '';
+    s.classList.toggle('filled', i < state.joinCode.length);
+    s.classList.toggle('cursor', i === state.joinCode.length);
+  });
+  if (state.joinCode.length === 6) {
+    toast('Joining ' + state.joinCode + '…');
+    setTimeout(() => goTo('create'), 900);
+  }
+}
+
+function quickJoin() {
+  toast('Scanning QR…');
+  setTimeout(() => goTo('create'), 800);
+}
+
+// ============ INIT ============
+goTo('home');
+
+// Friendly hint on load
+setTimeout(() => {
+  toast('Tap ◆ bottom-right to jump screens', 3000);
+}, 1200);
+</script>
+</body>
+</html>
