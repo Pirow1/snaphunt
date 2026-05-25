@@ -38,6 +38,7 @@ export type AppState = {
   setPlayers: (p: Player[]) => void;
   createSession: (args: { name: string; emoji: string }) => Promise<{ sessionId: string; code: string }>;
   joinSession: (args: { code: string; name: string; emoji: string }) => Promise<{ sessionId: string }>;
+  startGame: () => Promise<{ roundId: string; hiderId: string }>;
 
   // current round
   currentRound: Round | null;
@@ -176,6 +177,41 @@ export const useStore = create<AppState>((set) => ({
       session,
     }));
     return { sessionId: session.id };
+  },
+
+  startGame: async () => {
+    const state = useStore.getState();
+    const session = state.session;
+    const players = state.players;
+    const userId = state.identity.authUserId;
+
+    if (!session || !userId) throw new Error('No active session.');
+    if (session.host_id !== userId) throw new Error('Only the host can start the hunt.');
+    if (players.length < 3) throw new Error(`Need at least 3 players (have ${players.length}).`);
+
+    // Random hider for round 1.
+    const hider = players[Math.floor(Math.random() * players.length)]!;
+
+    // Pre-generate the round id so we never need to .select() under RLS.
+    const roundId = crypto.randomUUID();
+    const { error: rErr } = await supabase.from('rounds').insert({
+      id: roundId,
+      session_id: session.id,
+      round_number: 1,
+      hider_id: hider.id,
+      status: 'pending',
+      difficulty: 'easy',
+      point_value: 50,
+    });
+    if (rErr) throw rErr;
+
+    const { error: sErr } = await supabase
+      .from('sessions')
+      .update({ status: 'playing', current_round_id: roundId })
+      .eq('id', session.id);
+    if (sErr) throw sErr;
+
+    return { roundId, hiderId: hider.id };
   },
 
   currentRound: null,

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import QRCode from 'qrcode';
 import { useStore } from '../lib/store';
 import { useSession } from '../hooks/useSession';
+import { useViewTransition } from '../hooks/useViewTransition';
 import { TopBar, TopBarBadge } from '../components/ui/TopBar';
 import { PlayerRow } from '../components/game/PlayerRow';
 
@@ -12,12 +13,25 @@ const MIN_TO_START = 3;
 export default function LobbyScreen() {
   const { sessionId = null } = useParams<{ sessionId: string }>();
   useSession(sessionId);
+  const go = useViewTransition();
 
   const session = useStore((s) => s.session);
   const players = useStore((s) => s.players);
   const authUserId = useStore((s) => s.identity.authUserId);
+  const startGame = useStore((s) => s.startGame);
   const visionLoadProgress = useStore((s) => s.visionLoadProgress);
   const visionReady = useStore((s) => s.visionReady);
+
+  const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
+
+  // When the host flips session.status to 'playing', every client (host
+  // and guests) sails to the game screen via View Transition.
+  useEffect(() => {
+    if (session?.status === 'playing' && sessionId) {
+      go(`/game/${sessionId}`);
+    }
+  }, [session?.status, sessionId, go]);
 
   const isHost = !!session && !!authUserId && session.host_id === authUserId;
   const code = session?.code ?? '';
@@ -122,13 +136,29 @@ export default function LobbyScreen() {
           <div className="mt-auto pt-6">
             <button
               type="button"
-              disabled={players.length < MIN_TO_START}
+              disabled={players.length < MIN_TO_START || starting}
+              onClick={async () => {
+                setStartError(null);
+                setStarting(true);
+                try {
+                  await startGame();
+                  // The useEffect above will navigate everyone once the
+                  // session.status='playing' broadcast lands.
+                } catch (e) {
+                  const msg = e instanceof Error ? e.message : 'Could not start.';
+                  setStartError(msg);
+                  setStarting(false);
+                }
+              }}
               className="flex w-full items-center justify-center gap-2.5 rounded-[2px] border-2 border-ink bg-blaze px-[22px] py-[18px] font-display text-[17px] font-bold uppercase tracking-tight text-cream shadow-brutal transition-[transform,box-shadow] duration-[80ms] hover:bg-blaze-deep active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_var(--ink)] disabled:cursor-not-allowed disabled:opacity-40"
               data-testid="begin-hunt"
             >
-              Begin the Hunt →
+              {starting ? 'Starting…' : 'Begin the Hunt →'}
             </button>
-            {players.length < MIN_TO_START && (
+            {startError && (
+              <p className="mt-3 text-center font-display text-xs font-bold uppercase tracking-[0.15em] text-blaze">{startError}</p>
+            )}
+            {!startError && players.length < MIN_TO_START && (
               <p className="mt-3 text-center font-mono text-[10px] text-ink-soft">
                 Need at least {MIN_TO_START} players to start ({players.length}/{MIN_TO_START})
               </p>

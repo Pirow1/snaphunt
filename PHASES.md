@@ -35,7 +35,11 @@ file. Don't edit by hand mid-phase; let `/pm` mutate it so the log stays clean.
 
 ## Day 2 — Gameplay core
 
-- [ ] **2.1** Round creation + role reveal
+- [x] **2.1** Round creation + role reveal — passed 2026-05-25
+  - Files: `startGame()` store action, `src/screens/GameRouter.tsx`, `src/screens/RoleRevealScreen.tsx`; LobbyScreen "Begin the Hunt" wired
+  - GameRouter is the in-game state machine: per-client `accepted` flag, renders RoleReveal then Hider/Seeker placeholder. View Transition runs lobby→game via session.status broadcast.
+  - Stamp animation matches prototype (rotate(-4deg) scale 3→0.92→1 over 600ms)
+  - Smoke (`_smoke/phase-2-1.mjs`, 3 browsers): all reach /game in 679 ms; hiders=1, seekers=2; stamps render; Accept Mission routes to correct placeholder
 - [ ] **2.2** Hider capture + embedding ⭐ Pillar 1
 - [ ] **2.3** Compass + bearing arrow ⭐ Pillar 4
 - [ ] **2.4** Seeker hunt screen + radar
@@ -60,3 +64,4 @@ file. Don't edit by hand mid-phase; let `/pm` mutate it so the log stays clean.
 - **2026-05-25** Phase 1.3 PASS — Home + Create lobby; createSession() inserts session+host player; smoke verifies title rotation, blaze color, DB rows, store wiring
 - **2026-05-25** Phase 1.4 PASS — Join + Lobby with realtime; broadcast-from-trigger pattern (CDC postgres_changes was unreliable on supabase-js 2.106); B appears in A's lobby in 483 ms
 - **2026-05-25** Phase 1.5 PASS — Pillar 1 CLIP pipeline via @huggingface/transformers; WebGPU + q8 quantized model (~87MB); /vision-test dev page; HomeScreen pre-warms model on mount
+- **2026-05-25** Phase 2.1 PASS — startGame()/GameRouter/RoleRevealScreen; 3-browser smoke: roles assigned correctly, View Transition lobby→game works (screenshot caught mid-morph)

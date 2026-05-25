@@ -31,13 +31,13 @@ export default {
       },
       keyframes: {
         'stamp-in': {
-          '0%':   { transform: 'rotate(-12deg) scale(0.2)', opacity: '0' },
-          '60%':  { transform: 'rotate(-2deg)  scale(1.1)', opacity: '1' },
-          '100%': { transform: 'rotate(-3deg)  scale(1)',   opacity: '1' },
+          '0%':   { transform: 'rotate(-4deg) scale(3)',    opacity: '0' },
+          '60%':  { transform: 'rotate(-4deg) scale(0.92)', opacity: '1' },
+          '100%': { transform: 'rotate(-4deg) scale(1)',    opacity: '1' },
         },
         'stamp-out': {
-          '0%':   { transform: 'rotate(-3deg) scale(1)',   opacity: '1' },
-          '100%': { transform: 'rotate(0deg)  scale(0.6)', opacity: '0' },
+          '0%':   { transform: 'rotate(-4deg) scale(1)',   opacity: '1' },
+          '100%': { transform: 'rotate(-4deg) scale(0.6)', opacity: '0' },
         },
         'slide-in': {
           '0%':   { transform: 'translateX(-8px)', opacity: '0' },
@@ -61,7 +61,7 @@ export default {
         },
       },
       animation: {
-        'stamp-in':  'stamp-in 400ms cubic-bezier(0.5, -0.5, 0.3, 1.5) both',
+        'stamp-in':  'stamp-in 600ms cubic-bezier(0.5, -0.5, 0.3, 1.5) both',
         'stamp-out': 'stamp-out 250ms ease both',
         'slide-in':  'slide-in 350ms ease both',
         'new-pulse': 'new-pulse 1s ease both',

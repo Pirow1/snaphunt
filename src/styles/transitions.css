@@ -9,19 +9,19 @@
 }
 
 @keyframes stamp-in {
-  0%   { transform: rotate(-12deg) scale(0.2); opacity: 0; }
-  60%  { transform: rotate(-2deg)  scale(1.1); opacity: 1; }
-  100% { transform: rotate(-3deg)  scale(1);   opacity: 1; }
+  0%   { transform: rotate(-4deg) scale(3);    opacity: 0; }
+  60%  { transform: rotate(-4deg) scale(0.92); opacity: 1; }
+  100% { transform: rotate(-4deg) scale(1);    opacity: 1; }
 }
 
 @keyframes stamp-out {
-  0%   { transform: rotate(-3deg) scale(1);   opacity: 1; }
-  100% { transform: rotate(0deg)  scale(0.6); opacity: 0; }
+  0%   { transform: rotate(-4deg) scale(1);   opacity: 1; }
+  100% { transform: rotate(-4deg) scale(0.6); opacity: 0; }
 }
 
 ::view-transition-old(role-stamp) {
   animation: stamp-out 250ms ease;
 }
 ::view-transition-new(role-stamp) {
-  animation: stamp-in 400ms cubic-bezier(0.5, -0.5, 0.3, 1.5);
+  animation: stamp-in 600ms cubic-bezier(0.5, -0.5, 0.3, 1.5);
 }
