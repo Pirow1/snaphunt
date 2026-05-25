@@ -13,6 +13,7 @@ import SeekerHuntScreen from './screens/SeekerHuntScreen';
 import VerifyingScreen from './screens/VerifyingScreen';
 import ResultScreen from './screens/ResultScreen';
 import GalleryScreen from './screens/GalleryScreen';
+import VisionTestScreen from './screens/VisionTestScreen';
 
 export default function App() {
   const setAuthUserId = useStore((s) => s.setAuthUserId);
@@ -71,6 +72,7 @@ export default function App() {
         <Route path="/game/:sessionId/verify" element={<VerifyingScreen />} />
         <Route path="/game/:sessionId/result" element={<ResultScreen />} />
         <Route path="/gallery/:sessionId" element={<GalleryScreen />} />
+        {import.meta.env.DEV && <Route path="/vision-test" element={<VisionTestScreen />} />}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>

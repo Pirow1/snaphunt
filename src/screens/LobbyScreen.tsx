@@ -16,6 +16,8 @@ export default function LobbyScreen() {
   const session = useStore((s) => s.session);
   const players = useStore((s) => s.players);
   const authUserId = useStore((s) => s.identity.authUserId);
+  const visionLoadProgress = useStore((s) => s.visionLoadProgress);
+  const visionReady = useStore((s) => s.visionReady);
 
   const isHost = !!session && !!authUserId && session.host_id === authUserId;
   const code = session?.code ?? '';
@@ -99,6 +101,22 @@ export default function LobbyScreen() {
             )}
           </div>
         </div>
+
+        {!visionReady && (
+          <div className="mt-4 flex items-center gap-2 border-2 border-ink bg-cream-2 px-3 py-2 font-mono text-[11px] uppercase tracking-[0.15em]">
+            <span
+              aria-hidden="true"
+              className="inline-block h-2 w-2 animate-pulse rounded-full bg-blaze"
+            />
+            <span>Vision {visionLoadProgress}%</span>
+            <div className="ml-auto h-1.5 w-20 overflow-hidden border border-ink bg-cream">
+              <div
+                className="h-full bg-blaze transition-[width] duration-200"
+                style={{ width: `${Math.min(100, visionLoadProgress)}%` }}
+              />
+            </div>
+          </div>
+        )}
 
         {isHost && (
           <div className="mt-auto pt-6">

@@ -48,5 +48,13 @@ export default defineConfig({
   },
   server: {
     host: true,
+    // COOP + COEP credentialless lets ORT WASM use SharedArrayBuffer threads
+    // when available without requiring every cross-origin asset (fonts, HF
+    // model weights) to opt-in via CORP. Vision falls back to single-threaded
+    // WASM regardless if the browser can't grant SAB.
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'credentialless',
+    },
   },
 });

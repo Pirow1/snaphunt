@@ -26,7 +26,12 @@ file. Don't edit by hand mid-phase; let `/pm` mutate it so the log stays clean.
   - Migrations 0004 (RPC + publication), 0005 (realtime.messages RLS), 0006 (broadcast triggers) applied via Supabase MCP
   - Spec quirks: codes restricted to `23456789A` to match keypad; realtime CDC unreliable on supabase-js 2.106 — switched to private-channel broadcast-from-trigger
   - Smoke (`_smoke/phase-1-4.mjs`): 2-browser test, B appears in A's lobby in 483 ms, QR canvas renders, Begin Hunt disabled at <3 players
-- [ ] **1.5** Vision pipeline groundwork ⭐ Pillar 1
+- [x] **1.5** Vision pipeline groundwork ⭐ Pillar 1 — passed 2026-05-25
+  - Files: `src/lib/{vision,embeddings}.ts`, `src/screens/VisionTestScreen.tsx` (`/vision-test` DEV-only), HomeScreen + LobbyScreen wired to `setVisionLoadProgress` / `setVisionReady`
+  - Spec departure: dtype `q4` doesn't exist on Xenova/clip-vit-base-patch16; used `q8` which maps to vision_model_quantized.onnx (87MB int8 — matches spec's stated size)
+  - COOP + COEP `credentialless` headers added to Vite for SharedArrayBuffer threading
+  - WebGPU works in non-headless Chromium; headless lacks GPU adapter, WASM session create hangs there — smoke runs non-headless
+  - Smoke (`_smoke/phase-1-5.mjs`): device=webgpu, |v|=1.0000, encode ~1.2s, identical→1.0, ordering verified (synthetic images compress to [0.999,1.000])
 
 ## Day 2 — Gameplay core
 
@@ -54,3 +59,4 @@ file. Don't edit by hand mid-phase; let `/pm` mutate it so the log stays clean.
 - **2026-05-25** Phase 1.3 PREP — migration `0003_fix_rls_recursion` applied via Supabase MCP; hotfix for 42P17 recursion in 0001's `players`/`sessions`/`rounds` SELECT policies. DB ready for Create lobby flow.
 - **2026-05-25** Phase 1.3 PASS — Home + Create lobby; createSession() inserts session+host player; smoke verifies title rotation, blaze color, DB rows, store wiring
 - **2026-05-25** Phase 1.4 PASS — Join + Lobby with realtime; broadcast-from-trigger pattern (CDC postgres_changes was unreliable on supabase-js 2.106); B appears in A's lobby in 483 ms
+- **2026-05-25** Phase 1.5 PASS — Pillar 1 CLIP pipeline via @huggingface/transformers; WebGPU + q8 quantized model (~87MB); /vision-test dev page; HomeScreen pre-warms model on mount
