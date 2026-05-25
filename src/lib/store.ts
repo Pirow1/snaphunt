@@ -480,11 +480,16 @@ export const useStore = create<AppState>((set) => ({
       .invoke('verify-submission', { body: { submission_id: submissionId } })
       .then(({ error }) => {
         if (error) {
-          // Surface the error on the submission row so ResultScreen can react.
+          // Surface the error on the submission row so GameRouter can route
+          // back to the hunt; also raise a toast for visibility.
           void supabase
             .from('submissions')
             .update({ status: 'error' })
             .eq('id', submissionId);
+          useStore.getState().pushToast(
+            'Cloud verification failed — try again.',
+            'error',
+          );
         }
       });
 

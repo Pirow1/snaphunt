@@ -6,6 +6,7 @@ import { useSession } from '../hooks/useSession';
 import { useViewTransition } from '../hooks/useViewTransition';
 import { TopBar, TopBarBadge } from '../components/ui/TopBar';
 import { PlayerRow } from '../components/game/PlayerRow';
+import { playJoin, vibrate } from '../lib/audio';
 
 const MAX_PLAYERS = 8;
 const MIN_TO_START = 3;
@@ -56,6 +57,8 @@ export default function LobbyScreen() {
     players.forEach((p) => seen.add(p.id));
     if (fresh) {
       setRecentJoinId(fresh.id);
+      playJoin();
+      vibrate(30);
       const t = window.setTimeout(() => setRecentJoinId(null), 1200);
       return () => window.clearTimeout(t);
     }

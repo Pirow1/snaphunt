@@ -147,6 +147,12 @@ export default function GameRouter() {
       return submission?.photo_path || submission === null ? <VerifyingScreen /> : <SeekerHuntScreen />;
     }
     if (submission.status === 'verified') return <ResultScreen />;
+    if (submission.status === 'error') {
+      // Edge function failed (toast already shown from store). Clear the
+      // submission and let the seeker re-shoot.
+      setCurrentSubmissionId(null);
+      return <SeekerHuntScreen />;
+    }
   }
   return <SeekerHuntScreen />;
 }

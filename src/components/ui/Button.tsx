@@ -1,4 +1,5 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, MouseEvent, ReactNode } from 'react';
+import { playTap, vibrate } from '../../lib/audio';
 
 type Variant = 'primary' | 'dark' | 'gold' | 'ghost';
 
@@ -22,6 +23,7 @@ export function Button({
   className = '',
   children,
   type = 'button',
+  onClick,
   ...rest
 }: ButtonProps) {
   const base =
@@ -32,7 +34,16 @@ export function Button({
     'active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_var(--ink)] ' +
     'disabled:opacity-40 disabled:cursor-not-allowed';
   return (
-    <button type={type} className={`${base} ${VARIANT_CLASS[variant]} ${className}`} {...rest}>
+    <button
+      type={type}
+      className={`${base} ${VARIANT_CLASS[variant]} ${className}`}
+      onClick={(e: MouseEvent<HTMLButtonElement>) => {
+        playTap();
+        vibrate(15);
+        onClick?.(e);
+      }}
+      {...rest}
+    >
       {children}
     </button>
   );

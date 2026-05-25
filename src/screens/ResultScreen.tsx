@@ -3,11 +3,12 @@
 // Subtitle reads "DECIDED LOCALLY" / "REJECTED LOCALLY · NO API CALL" /
 // "VERIFIED BY CLAUDE" per submission.decision_source.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useStore } from '../lib/store';
 import { useViewTransition } from '../hooks/useViewTransition';
 import { Button } from '../components/ui/Button';
+import { playSuccessArpeggio, playFailDescend, vibrate } from '../lib/audio';
 import type { Submission } from '../lib/types';
 
 export default function ResultScreen() {
@@ -31,6 +32,23 @@ export default function ResultScreen() {
     })();
     return () => { cancelled = true; };
   }, [submissionId]);
+
+  // Fire success/fail audio + haptic exactly once per submission as soon as
+  // we have its verdict. Re-mounting on /game route changes is fine — the
+  // ref scopes "once per submissionId".
+  const playedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!submission || submission.status !== 'verified') return;
+    if (playedFor.current === submission.id) return;
+    playedFor.current = submission.id;
+    if (submission.is_match === true) {
+      playSuccessArpeggio();
+      vibrate(200);
+    } else {
+      playFailDescend();
+      vibrate([50, 30, 50]);
+    }
+  }, [submission?.id, submission?.status, submission?.is_match]);
 
   // Signed URLs for both photos.
   useEffect(() => {

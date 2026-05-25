@@ -13,6 +13,7 @@ import ResultScreen from './screens/ResultScreen';
 import GalleryScreen from './screens/GalleryScreen';
 import VisionTestScreen from './screens/VisionTestScreen';
 import CompassTestScreen from './screens/CompassTestScreen';
+import { ToastHost } from './components/ui/ToastHost';
 
 export default function App() {
   const setAuthUserId = useStore((s) => s.setAuthUserId);
@@ -83,6 +84,7 @@ export default function App() {
         {import.meta.env.DEV && <Route path="/compass-test" element={<CompassTestScreen />} />}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <ToastHost />
     </div>
   );
 }
