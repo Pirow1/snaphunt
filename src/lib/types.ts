@@ -16,6 +16,17 @@ export type SessionSettings = {
   final_match_threshold: number;
 };
 
+// Mirrors the DB-side default on the sessions.settings column. Keep in sync
+// with supabase/migrations/0001_init.sql.
+export const DEFAULT_SESSION_SETTINGS: SessionSettings = {
+  rounds_total: 5,
+  round_duration_seconds: 600,
+  location_tolerance_meters: 30,
+  local_match_threshold: 0.85,
+  local_reject_threshold: 0.55,
+  final_match_threshold: 75,
+};
+
 export type Session = {
   id: string;
   code: string;

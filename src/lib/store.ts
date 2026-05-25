@@ -1,5 +1,7 @@
 import { create } from 'zustand';
-import type { Player, Round, Session, Submission } from './types';
+import { supabase } from './supabase';
+import { generateJoinCode } from './codes';
+import { DEFAULT_SESSION_SETTINGS, type Player, type Round, type Session, type Submission } from './types';
 
 // Zustand store skeleton — slices per spec §11.1:
 // identity, session, current round, geolocation, compass heading,
@@ -34,6 +36,7 @@ export type AppState = {
   players: Player[];
   setSession: (s: Session | null) => void;
   setPlayers: (p: Player[]) => void;
+  createSession: (args: { name: string; emoji: string }) => Promise<{ sessionId: string; code: string }>;
 
   // current round
   currentRound: Round | null;
@@ -77,6 +80,72 @@ export const useStore = create<AppState>((set) => ({
   players: [],
   setSession: (session) => set({ session }),
   setPlayers: (players) => set({ players }),
+
+  createSession: async ({ name, emoji }) => {
+    const userId = useStore.getState().identity.authUserId;
+    if (!userId) throw new Error('Not authenticated yet — wait for anon sign-in to finish.');
+
+    const trimmedName = name.trim();
+    if (trimmedName.length < 1 || trimmedName.length > 24) {
+      throw new Error('Name must be 1–24 characters.');
+    }
+
+    // Pre-generate the session id so we never need to .select() under RLS
+    // (the "read own sessions" policy depends on the player row, which we
+    // haven't inserted yet at the moment of session insert).
+    const sessionId = crypto.randomUUID();
+
+    // Try a few codes in case of unique-constraint collision (23505).
+    let code = '';
+    for (let attempt = 0; attempt < 5; attempt++) {
+      code = generateJoinCode();
+      const { error } = await supabase
+        .from('sessions')
+        .insert({ id: sessionId, code, host_id: userId });
+      if (!error) break;
+      if (error.code !== '23505') throw error;
+      if (attempt === 4) throw new Error('Could not generate a unique join code, please try again.');
+    }
+
+    const { error: playerErr } = await supabase.from('players').insert({
+      id: userId,
+      session_id: sessionId,
+      name: trimmedName,
+      emoji,
+      is_host: true,
+    });
+    if (playerErr) throw playerErr;
+
+    // Optimistic local state — realtime subscription in Phase 1.4 will overwrite.
+    const now = new Date().toISOString();
+    set((s) => ({
+      identity: { ...s.identity, name: trimmedName, emoji },
+      session: {
+        id: sessionId,
+        code,
+        host_id: userId,
+        status: 'lobby',
+        current_round_id: null,
+        settings: { ...DEFAULT_SESSION_SETTINGS },
+        created_at: now,
+        finished_at: null,
+      },
+      players: [
+        {
+          id: userId,
+          session_id: sessionId,
+          name: trimmedName,
+          emoji,
+          score: 0,
+          is_host: true,
+          joined_at: now,
+          last_seen_at: now,
+        },
+      ],
+    }));
+
+    return { sessionId, code };
+  },
 
   currentRound: null,
   setCurrentRound: (currentRound) => set({ currentRound }),

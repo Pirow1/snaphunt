@@ -1,43 +1,53 @@
 import { useViewTransition } from '../hooks/useViewTransition';
+import { Button } from '../components/ui/Button';
+import { CrosshairBg } from '../components/ui/CrosshairBg';
 
+// Matches snaphunt.html #screen-home — topbar, crosshair hero, blaze rotated
+// HUNT accent, italic Fraunces tagline, two CTAs, dashed-top meta footer.
 export default function HomeScreen() {
   const go = useViewTransition();
+
   return (
-    <main className="flex h-full w-full flex-col items-center justify-between bg-cream px-8 pt-20 pb-12 text-ink">
-      <header className="flex w-full flex-col items-start gap-2">
-        <span className="font-mono text-xs tracking-[0.3em] text-ink/60">EST. NOW</span>
+    <main className="flex h-full w-full flex-col bg-cream text-ink">
+      <div className="flex items-center justify-between px-[22px] pt-[18px] pb-3">
+        <span className="font-display text-[11px] font-bold uppercase tracking-[0.18em] text-blaze">
+          ▲ v0.3 prototype
+        </span>
+        <span className="font-display text-[11px] font-bold uppercase tracking-[0.18em] text-ink-soft">
+          est. 2026
+        </span>
+      </div>
+
+      <div className="relative flex flex-1 flex-col items-center justify-center py-10 text-center">
+        <CrosshairBg />
         <h1
-          className="font-display text-7xl font-extrabold leading-[0.85] font-squeeze"
+          className="relative mb-2 font-display text-[clamp(60px,16vw,88px)] font-extrabold leading-[0.85] tracking-[-0.06em] font-squeeze"
           style={{ viewTransitionName: 'app-title' }}
         >
           SNAP
-          <span className="block -mt-2 rotate-[-3deg] text-blaze">HUNT</span>
+          <br />
+          <span className="inline-block rotate-[-3deg] text-blaze">HUNT</span>
+          <span className="absolute -bottom-2 left-[20%] block h-[6px] w-[60%] bg-ink" aria-hidden="true" />
         </h1>
-        <p className="mt-4 max-w-[20ch] font-serif italic text-lg text-ink/80">
-          Photographic hide &amp; seek. Race friends to find what you found.
+        <p className="mt-6 font-serif text-[17px] italic text-ink-soft">
+          photographic <span className="mx-2 text-blaze">✦</span> hide &amp; seek
         </p>
-      </header>
-
-      <div className="flex w-full flex-col gap-4">
-        <button
-          type="button"
-          onClick={() => go('/create')}
-          className="w-full border-2 border-ink bg-blaze py-4 font-display text-xl font-bold uppercase tracking-wider text-cream shadow-brutal active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_var(--ink)]"
-        >
-          Start a Hunt
-        </button>
-        <button
-          type="button"
-          onClick={() => go('/join')}
-          className="w-full border-2 border-ink bg-cream-2 py-4 font-display text-xl font-bold uppercase tracking-wider text-ink shadow-brutal active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_var(--ink)]"
-        >
-          Join a Hunt
-        </button>
       </div>
 
-      <footer className="font-mono text-[10px] uppercase tracking-[0.3em] text-ink/40">
-        v0.0.1 · scaffold
-      </footer>
+      <div className="flex flex-col gap-3 px-5 pb-7">
+        <Button variant="primary" onClick={() => go('/create')}>
+          <span>▶ Start a Hunt</span>
+        </Button>
+        <Button variant="dark" onClick={() => go('/join')}>
+          ◉ Join with Code
+        </Button>
+      </div>
+
+      <div className="flex items-center justify-between border-t-2 border-dashed border-ink px-[22px] pt-3.5 pb-2 font-display text-[11px] font-semibold uppercase tracking-[0.15em] text-ink-soft">
+        <span>3 friends min.</span>
+        <span>·</span>
+        <span>outdoors recommended</span>
+      </div>
     </main>
   );
 }
