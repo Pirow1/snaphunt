@@ -12,6 +12,7 @@ import VerifyingScreen from './screens/VerifyingScreen';
 import ResultScreen from './screens/ResultScreen';
 import GalleryScreen from './screens/GalleryScreen';
 import VisionTestScreen from './screens/VisionTestScreen';
+import CompassTestScreen from './screens/CompassTestScreen';
 
 export default function App() {
   const setAuthUserId = useStore((s) => s.setAuthUserId);
@@ -79,6 +80,7 @@ export default function App() {
         <Route path="/game/:sessionId/result" element={<ResultScreen />} />
         <Route path="/gallery/:sessionId" element={<GalleryScreen />} />
         {import.meta.env.DEV && <Route path="/vision-test" element={<VisionTestScreen />} />}
+        {import.meta.env.DEV && <Route path="/compass-test" element={<CompassTestScreen />} />}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
