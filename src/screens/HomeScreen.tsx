@@ -14,7 +14,7 @@ export default function HomeScreen() {
     <main className="flex h-full w-full flex-col bg-cream text-ink">
       <div className="flex items-center justify-between px-[22px] pt-[18px] pb-3">
         <span className="font-display text-[11px] font-bold uppercase tracking-[0.18em] text-blaze">
-          ▲ v0.3 prototype
+          ▲ v1
         </span>
         <span className="font-display text-[11px] font-bold uppercase tracking-[0.18em] text-ink-soft">
           est. 2026
