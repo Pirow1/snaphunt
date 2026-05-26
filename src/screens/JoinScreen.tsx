@@ -5,6 +5,7 @@ import { useStore } from '../lib/store';
 import { isValidJoinCode, normalizeJoinCode } from '../lib/codes';
 import { TopBar, TopBarBadge } from '../components/ui/TopBar';
 import { CodeInput } from '../components/game/CodeInput';
+import { ForestBg } from '../components/ui/ForestBg';
 
 const EMOJI_PICKS = ['🦊', '🦌', '🦅', '🐝', '🐢', '🦉'] as const;
 
@@ -52,13 +53,14 @@ export default function JoinScreen() {
   }
 
   return (
-    <main className="flex h-full w-full flex-col bg-forest-dark text-parchment">
+    <main className="relative isolate flex h-full w-full flex-col bg-forest-dark text-parchment">
+      <ForestBg />
       <TopBar title="Join a Hunt" back="/" right={<TopBarBadge>Guest</TopBarBadge>} />
 
       <div className="flex flex-1 flex-col px-[22px] pt-6 pb-4">
         {step === 'code' ? (
           <>
-            <div className="text-center font-display text-[11px] font-bold uppercase tracking-[0.18em] text-parchment/60">
+            <div className="text-center font-display text-[11px] font-bold uppercase tracking-[0.18em] text-parchment/75">
               Enter 6-character code
             </div>
             <CodeInput value={code} onChange={setCode} />
@@ -71,7 +73,7 @@ export default function JoinScreen() {
         ) : (
           <>
             <div className="text-center">
-              <span className="font-display text-[11px] font-bold uppercase tracking-[0.18em] text-parchment/60">
+              <span className="font-display text-[11px] font-bold uppercase tracking-[0.18em] text-parchment/75">
                 Joining
               </span>
               <div className="mt-1 font-mono text-3xl font-bold tracking-[0.15em] text-gold">{code}</div>
@@ -81,14 +83,14 @@ export default function JoinScreen() {
                   setStep('code');
                   setCode('');
                 }}
-                className="mt-1 font-display text-[10px] font-bold uppercase tracking-[0.2em] text-parchment/55 underline underline-offset-[3px]"
+                className="mt-1 font-display text-[10px] font-bold uppercase tracking-[0.2em] text-parchment/70 underline underline-offset-[3px]"
               >
                 change
               </button>
             </div>
 
             <section className="mt-6">
-              <label htmlFor="join-name" className="block font-display text-[11px] font-bold uppercase tracking-[0.25em] text-parchment/60">
+              <label htmlFor="join-name" className="block font-display text-[11px] font-bold uppercase tracking-[0.25em] text-parchment/75">
                 Your hunter name
               </label>
               <input
@@ -101,13 +103,13 @@ export default function JoinScreen() {
                 autoComplete="off"
                 spellCheck={false}
                 autoFocus
-                className="mt-3 w-full rounded-[3px] border-[1.5px] border-gold/25 bg-forest-mid/50 px-4 py-3 font-mono text-2xl tracking-widest text-parchment placeholder:text-parchment/30 focus:border-gold focus:bg-forest-mid/70 focus:outline-none"
+                className="mt-3 w-full rounded-[3px] border-[1.5px] border-gold/25 bg-forest-mid/50 px-4 py-3 font-mono text-2xl tracking-widest text-parchment placeholder:text-parchment/48 focus:border-gold focus:bg-forest-mid/70 focus:outline-none"
               />
-              <div className="mt-1 text-right font-mono text-[10px] text-parchment/50">{trimmedName.length}/24</div>
+              <div className="mt-1 text-right font-mono text-[10px] text-parchment/65">{trimmedName.length}/24</div>
             </section>
 
             <section className="mt-4">
-              <span className="block font-display text-[11px] font-bold uppercase tracking-[0.25em] text-parchment/60">
+              <span className="block font-display text-[11px] font-bold uppercase tracking-[0.25em] text-parchment/75">
                 Pick a sigil
               </span>
               <div className="mt-3 grid grid-cols-6 gap-2">
@@ -147,7 +149,7 @@ export default function JoinScreen() {
                 {submitting ? '…Joining…' : '▶ Join the Hunt'}
               </button>
               {!authUserId && (
-                <p className="mt-3 text-center font-mono text-[10px] text-parchment/50">Waiting for anonymous sign-in…</p>
+                <p className="mt-3 text-center font-mono text-[10px] text-parchment/65">Waiting for anonymous sign-in…</p>
               )}
             </div>
           </>

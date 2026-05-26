@@ -8,6 +8,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useStore } from '../lib/store';
 import { Button } from '../components/ui/Button';
+import { ForestBg } from '../components/ui/ForestBg';
 import { playSuccessArpeggio, vibrate } from '../lib/audio';
 import type { Player, Session } from '../lib/types';
 
@@ -62,7 +63,7 @@ export default function WinnerRevealScreen() {
 
   if (!sessionId || !session) {
     return (
-      <main className="grid h-full place-items-center bg-ink text-cream font-mono text-xs uppercase tracking-[0.25em] opacity-60">
+      <main className="grid h-full place-items-center bg-forest-dark font-mono text-xs uppercase tracking-[0.25em] text-parchment/68">
         Tallying scores…
       </main>
     );
@@ -73,11 +74,12 @@ export default function WinnerRevealScreen() {
 
   return (
     <main
-      className="flex h-full w-full flex-col items-center justify-between bg-ink px-6 py-10 text-cream"
+      className="relative isolate flex h-full w-full flex-col items-center justify-between bg-forest-dark px-6 py-10 text-parchment"
       data-testid="winner-reveal"
     >
-      <div className="flex flex-1 flex-col items-center justify-center text-center">
-        <div className="mb-4 font-mono text-[10px] uppercase tracking-[0.3em] opacity-60">
+      <ForestBg />
+      <div className="relative z-[1] flex flex-1 flex-col items-center justify-center text-center">
+        <div className="mb-4 font-mono text-[10px] uppercase tracking-[0.3em] text-parchment/65">
           Hunt Complete
         </div>
 
@@ -86,14 +88,14 @@ export default function WinnerRevealScreen() {
         </div>
 
         {allPlayedZero ? (
-          <div className="border-[3px] border-gold bg-ink-soft px-8 py-7 shadow-brutal">
-            <p className="font-serif text-lg italic text-cream-3">
+          <div className="rounded-[3px] border-[3px] border-gold bg-forest-mid/80 px-8 py-7 shadow-brutal-gold">
+            <p className="font-serif text-lg italic text-parchment/80">
               Nobody scored. Try again?
             </p>
           </div>
         ) : (
           <div
-            className="border-[3px] border-gold bg-ink-soft px-8 py-7 shadow-brutal"
+            className="rounded-[3px] border-[3px] border-gold bg-forest-mid/80 px-8 py-7 shadow-brutal-gold"
             data-testid="winner-card"
           >
             <div className="flex flex-wrap justify-center gap-x-6 gap-y-4">
@@ -114,14 +116,14 @@ export default function WinnerRevealScreen() {
                 );
               })}
             </div>
-            <div className="mt-5 font-mono text-[11px] uppercase tracking-[0.25em] text-cream-3/80">
+            <div className="mt-5 font-mono text-[11px] uppercase tracking-[0.25em] text-parchment/72">
               {isTie ? 'tied at' : ''} {champions[0]!.score} pts
             </div>
           </div>
         )}
 
         {!allPlayedZero && (
-          <p className="mt-6 max-w-[28ch] font-serif text-base italic text-cream-3">
+          <p className="mt-6 max-w-[28ch] font-serif text-base italic text-parchment/80">
             {youAreChampion
               ? isTie
                 ? 'A shared throne. Worthy hunters all.'
@@ -133,7 +135,7 @@ export default function WinnerRevealScreen() {
         )}
       </div>
 
-      <div className="w-full max-w-[320px]">
+      <div className="relative z-[1] w-full max-w-[320px]">
         <Button
           variant="primary"
           onClick={() => navigate(`/gallery/${sessionId}`)}

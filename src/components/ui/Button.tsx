@@ -12,7 +12,7 @@ const VARIANT_CLASS: Record<Variant, string> = {
   primary: 'bg-gold text-forest-dark border-gold font-extrabold hover:bg-gold-light',
   dark:    'bg-[rgba(10,18,8,0.85)] text-gold border-gold/35',
   gold:    'bg-gold text-forest-dark border-gold font-extrabold',
-  ghost:   'bg-transparent text-parchment/55 border-transparent active:scale-100',
+  ghost:   'bg-transparent text-parchment/72 border-transparent active:scale-100',
 };
 
 export function Button({

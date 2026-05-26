@@ -4,6 +4,7 @@ import { useStore } from '../lib/store';
 import { useViewTransition } from '../hooks/useViewTransition';
 import { Button } from '../components/ui/Button';
 import { playSuccessArpeggio, playFailDescend, vibrate } from '../lib/audio';
+import { ForestBg } from '../components/ui/ForestBg';
 import type { Submission } from '../lib/types';
 
 export default function ResultScreen() {
@@ -57,7 +58,7 @@ export default function ResultScreen() {
 
   if (!submission) {
     return (
-      <main className="grid h-full place-items-center bg-forest-dark font-mono text-xs uppercase tracking-[0.25em] text-parchment/50">
+      <main className="grid h-full place-items-center bg-forest-dark font-mono text-xs uppercase tracking-[0.25em] text-parchment/68">
         loading verdict…
       </main>
     );
@@ -79,7 +80,8 @@ export default function ResultScreen() {
     : 'bg-[rgba(90,28,14,0.9)]';
 
   return (
-    <main className="flex h-full w-full flex-col bg-forest-dark text-parchment" data-testid="result">
+    <main className="relative isolate flex h-full w-full flex-col bg-forest-dark text-parchment" data-testid="result">
+      <ForestBg />
       <div className={`px-[22px] pb-4 pt-7 text-center ${bannerBg}`}>
         <div
           className="font-display text-[56px] font-extrabold uppercase leading-[0.85] tracking-[-0.04em] font-squeeze text-parchment"

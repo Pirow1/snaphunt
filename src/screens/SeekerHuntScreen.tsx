@@ -10,6 +10,7 @@ import { TargetCard } from '../components/game/TargetCard';
 import { Radar } from '../components/game/Radar';
 import { PhotoCapture } from '../components/game/PhotoCapture';
 import { MiniLeaderboard } from '../components/game/MiniLeaderboard';
+import { ForestBg } from '../components/ui/ForestBg';
 
 export default function SeekerHuntScreen() {
   const round = useStore((s) => s.currentRound);
@@ -77,7 +78,8 @@ export default function SeekerHuntScreen() {
   const canSharpen = sharpenLevel < 3;
 
   return (
-    <main className="flex h-full w-full flex-col bg-forest-dark text-parchment">
+    <main className="relative isolate flex h-full w-full flex-col bg-forest-dark text-parchment">
+      <ForestBg />
       <TopBar
         title="Active Hunt"
         right={<TopBarBadge tone="gold">Seeker</TopBarBadge>}

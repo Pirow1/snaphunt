@@ -10,6 +10,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useStore } from '../lib/store';
+import { ForestBg } from '../components/ui/ForestBg';
 import type { Submission } from '../lib/types';
 
 export default function RoundResultScreen() {
@@ -102,14 +103,19 @@ export default function RoundResultScreen() {
     return { base, speed, assists, awarded: winningSubmission.points_awarded ?? 0 };
   }, [winningSubmission, round.point_value, round.started_at, round.expires_at, round.ended_at]);
 
+  const headerBg = winner
+    ? 'bg-[rgba(20,52,14,0.92)]'
+    : 'bg-[rgba(80,22,40,0.85)]';
+
   return (
-    <main className="flex h-full w-full flex-col bg-ink text-cream" data-testid="round-result">
-      <div className={`px-6 pt-6 pb-4 text-center ${winner ? 'bg-forest' : 'bg-plum'}`}>
-        <div className="font-mono text-[11px] uppercase tracking-[0.25em] opacity-70">
+    <main className="relative isolate flex h-full w-full flex-col bg-forest-dark text-parchment" data-testid="round-result">
+      <ForestBg />
+      <div className={`px-6 pt-6 pb-4 text-center ${headerBg}`}>
+        <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-parchment/72">
           Round {round.round_number} {winner ? 'Result' : 'Expired'}
         </div>
         <div
-          className="mt-2 font-display text-[44px] font-extrabold uppercase leading-[0.9] tracking-[-0.04em] font-squeeze"
+          className="mt-2 font-display text-[44px] font-extrabold uppercase leading-[0.9] tracking-[-0.04em] font-squeeze text-parchment"
           data-testid="round-result-headline"
         >
           {winner ? (
@@ -121,7 +127,7 @@ export default function RoundResultScreen() {
           )}
         </div>
         {!winner && hider && (
-          <p className="mt-2 font-serif text-[15px] italic opacity-85">
+          <p className="mt-2 font-serif text-[15px] italic text-parchment/80">
             Nobody found {hider.emoji} {hider.id === authUserId ? 'your' : `${hider.name}'s`} trap.
           </p>
         )}
@@ -134,20 +140,20 @@ export default function RoundResultScreen() {
         </div>
 
         {breakdown && (
-          <div className="border-2 border-cream bg-ink-soft p-3 text-center" data-testid="round-result-breakdown">
+          <div className="rounded-[3px] border-2 border-gold/50 bg-forest-mid/80 p-3 text-center" data-testid="round-result-breakdown">
             <div className="font-display text-[12px] font-extrabold uppercase tracking-[0.2em] text-gold">
               Points Awarded
             </div>
             <div className="mt-1 font-display text-[36px] font-extrabold text-gold">
               +{breakdown.awarded}
             </div>
-            <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.15em] opacity-70">
+            <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.15em] text-parchment/68">
               {breakdown.base} × {breakdown.speed.toFixed(2)} speed × {breakdown.assists.toFixed(2)} assists
             </div>
           </div>
         )}
 
-        <div className="border-2 border-cream bg-ink-soft px-3 py-2.5">
+        <div className="rounded-[3px] border-2 border-gold/40 bg-forest-mid/70 px-3 py-2.5">
           <div className="mb-1.5 font-display text-[10px] font-extrabold uppercase tracking-[0.2em] text-gold">
             ★ Standings ★
           </div>
@@ -157,14 +163,14 @@ export default function RoundResultScreen() {
               return (
                 <li
                   key={p.id}
-                  className="flex items-center gap-2 border-b border-dashed border-cream/20 py-1.5 last:border-b-0"
+                  className="flex items-center gap-2 border-b border-dashed border-gold/20 py-1.5 last:border-b-0"
                   data-testid="round-result-rank"
                   data-rank={i + 1}
                 >
-                  <span className="font-mono text-[11px] opacity-50">
+                  <span className="font-mono text-[11px] text-parchment/58">
                     {String(i + 1).padStart(2, '0')}
                   </span>
-                  <span className={`flex-1 font-display text-[13px] ${isYou ? 'text-gold font-bold' : ''}`}>
+                  <span className={`flex-1 font-display text-[13px] ${isYou ? 'text-gold font-bold' : 'text-parchment'}`}>
                     {p.emoji} {isYou ? 'You' : p.name}
                   </span>
                   <span className="font-mono text-[12px] font-bold text-gold">{p.score}</span>
@@ -174,7 +180,7 @@ export default function RoundResultScreen() {
           </ul>
         </div>
 
-        <div className="mt-auto text-center font-mono text-[10px] uppercase tracking-[0.25em] opacity-50">
+        <div className="mt-auto text-center font-mono text-[10px] uppercase tracking-[0.25em] text-parchment/62">
           {isLastRound ? 'Wrapping up…' : `Next round in ${secondsLeft}…`}
         </div>
       </div>
@@ -184,15 +190,15 @@ export default function RoundResultScreen() {
 
 function PhotoCell({ url, label, placeholder = '…' }: { url: string | null; label: string; placeholder?: string }) {
   return (
-    <div className="relative aspect-square overflow-hidden border-2 border-cream">
+    <div className="relative aspect-square overflow-hidden rounded-[3px] border-2 border-gold/40">
       {url ? (
         <img src={url} alt={label} className="h-full w-full object-cover" />
       ) : (
-        <div className="grid h-full w-full place-items-center bg-ink-soft font-mono text-[10px] uppercase tracking-[0.18em] text-cream/60">
+        <div className="grid h-full w-full place-items-center bg-forest-mid/60 font-mono text-[10px] uppercase tracking-[0.18em] text-parchment/65">
           {placeholder}
         </div>
       )}
-      <div className="absolute bottom-0 left-0 right-0 bg-cream py-0.5 text-center font-display text-[9px] font-extrabold uppercase tracking-[0.15em] text-ink">
+      <div className="absolute bottom-0 left-0 right-0 bg-[rgba(10,18,8,0.88)] py-0.5 text-center font-display text-[9px] font-extrabold uppercase tracking-[0.15em] text-gold">
         {label}
       </div>
     </div>

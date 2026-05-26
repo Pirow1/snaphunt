@@ -5,6 +5,7 @@ import { useStore } from '../lib/store';
 import type { Player, Round, Submission } from '../lib/types';
 import { Button } from '../components/ui/Button';
 import { TopBar, TopBarBadge } from '../components/ui/TopBar';
+import { ForestBg } from '../components/ui/ForestBg';
 
 type Loaded = {
   players: Player[];
@@ -89,7 +90,8 @@ export default function GalleryScreen() {
   };
 
   return (
-    <main className="flex min-h-full w-full flex-col bg-forest-dark text-parchment" data-testid="gallery">
+    <main className="relative isolate flex min-h-full w-full flex-col bg-forest-dark text-parchment" data-testid="gallery">
+      <ForestBg />
       <TopBar title="Hunt Recap" right={<TopBarBadge>Final</TopBarBadge>} />
 
       <div className="px-[18px] py-5">
@@ -99,16 +101,16 @@ export default function GalleryScreen() {
             <br />
             Souvenirs
           </h2>
-          <p className="mt-2 font-serif text-base italic text-parchment/60">every match, every miss</p>
+          <p className="mt-2 font-serif text-base italic text-parchment/75">every match, every miss</p>
         </div>
 
         <div className="mt-5 flex flex-col gap-3.5" data-testid="recap-list">
           {!loaded ? (
-            <div className="rounded-[3px] border border-gold/15 bg-forest-mid/40 px-4 py-6 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-parchment/40">
+            <div className="rounded-[3px] border border-gold/15 bg-forest-mid/40 px-4 py-6 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-parchment/58">
               Loading recap…
             </div>
           ) : loaded.rounds.length === 0 ? (
-            <div className="rounded-[3px] border border-gold/15 bg-forest-mid/40 px-4 py-6 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-parchment/40">
+            <div className="rounded-[3px] border border-gold/15 bg-forest-mid/40 px-4 py-6 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-parchment/58">
               No rounds were played.
             </div>
           ) : (
@@ -218,7 +220,7 @@ function PhotoCell({ url, label, placeholder = null }: { url?: string; label: st
       {url ? (
         <img src={url} alt={label} className="h-full w-full object-cover" />
       ) : (
-        <div className="grid h-full w-full place-items-center bg-forest-mid/50 font-mono text-[10px] uppercase tracking-[0.18em] text-parchment/40">
+        <div className="grid h-full w-full place-items-center bg-forest-mid/50 font-mono text-[10px] uppercase tracking-[0.18em] text-parchment/58">
           {placeholder ?? '…'}
         </div>
       )}

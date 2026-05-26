@@ -7,6 +7,7 @@ import { useViewTransition } from '../hooks/useViewTransition';
 import { TopBar, TopBarBadge } from '../components/ui/TopBar';
 import { PlayerRow } from '../components/game/PlayerRow';
 import { playJoin, vibrate } from '../lib/audio';
+import { ForestBg } from '../components/ui/ForestBg';
 
 const MAX_PLAYERS = 8;
 const MIN_TO_START = 3;
@@ -63,12 +64,13 @@ export default function LobbyScreen() {
   if (!sessionId) return null;
 
   return (
-    <main className="flex h-full w-full flex-col bg-forest-dark text-parchment">
+    <main className="relative isolate flex h-full w-full flex-col bg-forest-dark text-parchment">
+      <ForestBg />
       <TopBar title="Hunt Lobby" back="/" right={<TopBarBadge tone={isHost ? 'gold' : 'dark'}>{isHost ? 'Host' : 'Guest'}</TopBarBadge>} />
 
       <div className="flex flex-1 flex-col overflow-y-auto px-[22px] pt-5 pb-7">
         <div className="text-center">
-          <div className="font-display text-[11px] font-bold uppercase tracking-[0.25em] text-parchment/60">
+          <div className="font-display text-[11px] font-bold uppercase tracking-[0.25em] text-parchment/75">
             Share this code
           </div>
           <div
@@ -93,14 +95,14 @@ export default function LobbyScreen() {
 
         <div className="mt-5">
           <div className="mb-2 flex items-center justify-between">
-            <span className="font-display text-[11px] font-bold uppercase tracking-[0.18em] text-parchment/60">Players Joined</span>
+            <span className="font-display text-[11px] font-bold uppercase tracking-[0.18em] text-parchment/75">Players Joined</span>
             <span className="font-mono text-[11px] font-bold tracking-[0.18em] text-gold" data-testid="player-count">
               {players.length} / {MAX_PLAYERS}
             </span>
           </div>
           <div className="flex flex-col gap-2">
             {players.length === 0 ? (
-              <div className="rounded-[3px] border border-gold/15 bg-forest-mid/40 py-4 text-center font-mono text-xs text-parchment/40">
+              <div className="rounded-[3px] border border-gold/15 bg-forest-mid/40 py-4 text-center font-mono text-xs text-parchment/58">
                 waiting…
               </div>
             ) : (
@@ -157,7 +159,7 @@ export default function LobbyScreen() {
               <p className="mt-3 text-center font-display text-xs font-bold uppercase tracking-[0.15em] text-ember">{startError}</p>
             )}
             {!startError && players.length < MIN_TO_START && (
-              <p className="mt-3 text-center font-mono text-[10px] text-parchment/50">
+              <p className="mt-3 text-center font-mono text-[10px] text-parchment/65">
                 Need at least {MIN_TO_START} players to start ({players.length}/{MIN_TO_START})
               </p>
             )}

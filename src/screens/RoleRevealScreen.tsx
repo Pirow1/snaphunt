@@ -1,5 +1,6 @@
 import { useViewTransition } from '../hooks/useViewTransition';
 import { Button } from '../components/ui/Button';
+import { ForestBg } from '../components/ui/ForestBg';
 
 type RoleRevealProps = {
   role: 'hider' | 'seeker';
@@ -19,11 +20,12 @@ export default function RoleRevealScreen({ role, hiderName, onAccept }: RoleReve
   const titleColor = role === 'hider' ? 'text-ember' : 'text-gold';
 
   return (
-    <main className="flex h-full w-full flex-col items-center justify-center bg-forest-dark px-6 text-parchment">
+    <main className="relative isolate flex h-full w-full flex-col items-center justify-center bg-forest-dark px-6 text-parchment">
+      <ForestBg />
       {/* Subtle radial glow */}
-      <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse at center, rgba(200,168,75,0.08) 0%, transparent 70%)' }} aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse at center, rgba(200,168,75,0.12) 0%, transparent 70%)', zIndex: 0 }} aria-hidden="true" />
 
-      <div className="relative w-[88%] max-w-[340px] text-center">
+      <div className="relative z-[1] w-[88%] max-w-[340px] text-center">
         <div
           className="mb-7 inline-block animate-stamp-in rounded-[2px] border-2 border-gold px-[18px] py-2 font-display text-[12px] font-extrabold uppercase tracking-[0.2em] text-gold"
           style={{ viewTransitionName: 'role-stamp' }}
@@ -40,12 +42,12 @@ export default function RoleRevealScreen({ role, hiderName, onAccept }: RoleReve
           {role}
         </h1>
 
-        <p className="mx-auto mb-7 mt-4 max-w-[28ch] font-serif text-[18px] italic leading-snug text-parchment/70">
+        <p className="mx-auto mb-7 mt-4 max-w-[28ch] font-serif text-[18px] italic leading-snug text-parchment/82">
           {COPY[role]}
         </p>
 
         {role === 'seeker' && hiderName && (
-          <p className="mb-7 font-mono text-[11px] uppercase tracking-[0.25em] text-parchment/60">
+          <p className="mb-7 font-mono text-[11px] uppercase tracking-[0.25em] text-parchment/75">
             Hider this round · <span className="text-gold">{hiderName}</span>
           </p>
         )}

@@ -4,6 +4,7 @@ import { useStore } from '../lib/store';
 import { supabase } from '../lib/supabase';
 import { TopBar, TopBarBadge } from '../components/ui/TopBar';
 import { useCountdown } from '../hooks/useCountdown';
+import { ForestBg } from '../components/ui/ForestBg';
 import type { Player } from '../lib/types';
 
 type PresenceMeta = {
@@ -98,7 +99,8 @@ export default function HiderWaitScreen() {
   }, [submissions, round?.id, playerById, pushToast]);
 
   return (
-    <main className="flex h-full w-full flex-col bg-forest-dark text-parchment" data-testid="hider-wait">
+    <main className="relative isolate flex h-full w-full flex-col bg-forest-dark text-parchment" data-testid="hider-wait">
+      <ForestBg />
       <TopBar title="Trap Active" right={<TopBarBadge>Hider</TopBarBadge>} />
 
       <div className="px-[22px] py-3 text-center">
@@ -113,7 +115,7 @@ export default function HiderWaitScreen() {
           <br />
           Are Out There.
         </h2>
-        <p className="mt-3 font-serif text-base italic text-parchment/60">
+        <p className="mt-3 font-serif text-base italic text-parchment/75">
           Watch them squirm <span className="font-display text-ember">✦</span>{' '}
           <span data-testid="hider-countdown">{countdown.text} left</span>
         </p>
@@ -143,11 +145,11 @@ export default function HiderWaitScreen() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-[22px] pb-5">
-        <span className="block pb-2.5 font-display text-[11px] font-extrabold uppercase tracking-[0.2em] text-parchment/60">
+        <span className="block pb-2.5 font-display text-[11px] font-extrabold uppercase tracking-[0.2em] text-parchment/75">
           Live Tracking
         </span>
         {tracked.length === 0 ? (
-          <div className="rounded-[3px] border border-gold/15 bg-forest-mid/40 px-4 py-5 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-parchment/40">
+          <div className="rounded-[3px] border border-gold/15 bg-forest-mid/40 px-4 py-5 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-parchment/58">
             Waiting for the hunt to begin…
           </div>
         ) : (

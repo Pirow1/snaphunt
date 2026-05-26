@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useStore } from '../lib/store';
+import { ForestBg } from '../components/ui/ForestBg';
 
 const STEPS = [
   'Examining the evidence…',
@@ -42,10 +43,11 @@ export default function VerifyingScreen() {
   }, [round?.photo_path, submissionId]);
 
   return (
-    <main className="flex h-full w-full flex-col items-center justify-center bg-forest-dark px-6 text-parchment">
+    <main className="relative isolate flex h-full w-full flex-col items-center justify-center bg-forest-dark px-6 text-parchment">
+      <ForestBg />
       <div className="flex items-center gap-3" data-testid="verifying">
         <Photo url={targetUrl} label="Target" delay="0s" />
-        <span className="font-serif text-2xl italic text-parchment/50">vs.</span>
+        <span className="font-serif text-2xl italic text-parchment/68">vs.</span>
         <Photo url={seekerUrl} label="Yours" delay="0.7s" />
       </div>
 
@@ -53,7 +55,7 @@ export default function VerifyingScreen() {
         style={{ fontVariationSettings: "'wdth' 75" }}>
         Cross-Referencing
       </h2>
-      <p className="mt-2 font-serif text-base italic text-parchment/65" data-testid="verify-step">
+      <p className="mt-2 font-serif text-base italic text-parchment/78" data-testid="verify-step">
         {STEPS[stepIdx]}
       </p>
 

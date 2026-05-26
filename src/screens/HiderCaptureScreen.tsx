@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useStore } from '../lib/store';
 import { TopBar, TopBarBadge } from '../components/ui/TopBar';
 import { PhotoCapture } from '../components/game/PhotoCapture';
+import { ForestBg } from '../components/ui/ForestBg';
 import type { Difficulty } from '../lib/types';
 
 const DIFFS: { id: Difficulty; label: string; pts: number }[] = [
@@ -52,7 +53,8 @@ export default function HiderCaptureScreen() {
   const submitting = phase !== 'idle' && phase !== 'done';
 
   return (
-    <main className="flex h-full w-full flex-col bg-forest-dark text-parchment">
+    <main className="relative isolate flex h-full w-full flex-col bg-forest-dark text-parchment">
+      <ForestBg />
       <TopBar
         title="Hide Something"
         right={<TopBarBadge>Hider</TopBarBadge>}
@@ -77,7 +79,7 @@ export default function HiderCaptureScreen() {
                 <line x1="5"  y1="40" x2="20" y2="40" stroke="#C8A84B" strokeWidth="2" />
                 <line x1="60" y1="40" x2="75" y2="40" stroke="#C8A84B" strokeWidth="2" />
               </svg>
-              <p className="font-serif text-[15px] italic leading-[1.5] text-parchment/50">
+              <p className="font-serif text-[15px] italic leading-[1.5] text-parchment/65">
                 Find a fixed, distinctive object.
                 <br />
                 Frame it well. Snap it.
@@ -94,7 +96,7 @@ export default function HiderCaptureScreen() {
 
         {/* Difficulty chips */}
         <div className="mb-3.5">
-          <span className="block mb-2 font-display text-[11px] font-bold uppercase tracking-[0.18em] text-parchment/60">
+          <span className="block mb-2 font-display text-[11px] font-bold uppercase tracking-[0.18em] text-parchment/75">
             Difficulty Tier
           </span>
           <div className="grid grid-cols-3 gap-2">
@@ -111,7 +113,7 @@ export default function HiderCaptureScreen() {
                     'active:scale-[0.97]',
                     active
                       ? 'border-gold bg-gold/20 text-gold'
-                      : 'border-gold/25 bg-forest-mid/50 text-parchment/60',
+                      : 'border-gold/25 bg-forest-mid/50 text-parchment/75',
                   ].join(' ')}
                   data-testid={`diff-${d.id}`}
                 >
@@ -129,7 +131,7 @@ export default function HiderCaptureScreen() {
           value={hint}
           onChange={(e) => setHint(e.target.value.slice(0, 200))}
           placeholder="Optional hint — leave a clue for the seekers..."
-          className="mb-3.5 w-full resize-none rounded-[3px] border-[1.5px] border-gold/25 bg-forest-mid/50 p-3.5 font-serif text-[14px] italic text-parchment placeholder:text-parchment/35 focus:border-gold focus:bg-forest-mid/70 focus:outline-none"
+          className="mb-3.5 w-full resize-none rounded-[3px] border-[1.5px] border-gold/25 bg-forest-mid/50 p-3.5 font-serif text-[14px] italic text-parchment placeholder:text-parchment/52 focus:border-gold focus:bg-forest-mid/70 focus:outline-none"
           data-testid="hint-input"
         />
 

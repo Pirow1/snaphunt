@@ -44,17 +44,24 @@ export default function HomeScreen() {
             <stop offset="100%" stopColor="#F0C850" stopOpacity="0.18"/>
           </linearGradient>
           <linearGradient id="barkRedL" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#1A0C08"/>
-            <stop offset="30%" stopColor="#2C1610"/>
-            <stop offset="65%" stopColor="#3A1E12"/>
-            <stop offset="100%" stopColor="#241208"/>
+            <stop offset="0%"   stopColor="#1C0C06"/>
+            <stop offset="25%"  stopColor="#341A0E"/>
+            <stop offset="55%"  stopColor="#4E2614"/>
+            <stop offset="75%"  stopColor="#6A3820"/>
+            <stop offset="100%" stopColor="#2A1408"/>
           </linearGradient>
           <linearGradient id="barkRedC" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#1C0E08"/>
-            <stop offset="25%" stopColor="#30180C"/>
-            <stop offset="55%" stopColor="#4A2A14"/>
-            <stop offset="75%" stopColor="#5C3818"/>
-            <stop offset="100%" stopColor="#3A2010"/>
+            <stop offset="0%"   stopColor="#1C0E08"/>
+            <stop offset="22%"  stopColor="#321A0C"/>
+            <stop offset="52%"  stopColor="#522E16"/>
+            <stop offset="72%"  stopColor="#6A3E1C"/>
+            <stop offset="100%" stopColor="#3C2210"/>
+          </linearGradient>
+          <linearGradient id="barkRedR" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%"   stopColor="#241210"/>
+            <stop offset="35%"  stopColor="#3A1E14"/>
+            <stop offset="65%"  stopColor="#4C2A1A"/>
+            <stop offset="100%" stopColor="#180A06"/>
           </linearGradient>
           <linearGradient id="barkSpruce" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#140C08"/>
@@ -145,15 +152,35 @@ export default function HomeScreen() {
         <rect x="0" y="450" width="420" height="80" fill="url(#mistGrad)" filter="url(#mistBlur)"/>
 
         {/* Trunk A: massive left-edge redwood */}
-        <polygon points="-22,900 -6,0 36,0 44,900" fill="url(#barkRedL)"/>
-        <rect x="-16" y="0" width="6"  height="900" fill="#100806" opacity="0.72"/>
-        <rect x="14"  y="0" width="4"  height="900" fill="#120A06" opacity="0.62"/>
-        <rect x="36"  y="0" width="6"  height="900" fill="#4A2810" opacity="0.52"/>
+        <polygon points="-22,900 -6,0 40,0 52,900" fill="url(#barkRedL)"/>
+        <rect x="-14" y="0" width="6"  height="900" fill="#0E0804" opacity="0.80"/>
+        <rect x="16"  y="0" width="4"  height="900" fill="#0E0804" opacity="0.65"/>
+        <rect x="40"  y="0" width="9"  height="900" fill="#724020" opacity="0.62"/>
+        {/* bark crack lines */}
+        <rect x="-22" y="155" width="74" height="1.5" fill="#855030" opacity="0.42"/>
+        <rect x="-22" y="298" width="74" height="1.5" fill="#855030" opacity="0.34"/>
+        <rect x="-22" y="452" width="74" height="1.5" fill="#855030" opacity="0.38"/>
+        <rect x="-22" y="608" width="74" height="1.5" fill="#855030" opacity="0.32"/>
+        <rect x="-22" y="754" width="74" height="1"   fill="#855030" opacity="0.28"/>
 
         {/* Trunk B: spruce center-left */}
-        <polygon points="74,900 86,70 118,64 126,900" fill="url(#barkSpruce)"/>
-        <rect x="78"  y="72"  width="5"  height="828" fill="#0E0A06" opacity="0.66"/>
-        <rect x="104" y="66"  width="4"  height="834" fill="#0E0A06" opacity="0.58"/>
+        <polygon points="74,900 86,70 122,62 134,900" fill="url(#barkRedC)"/>
+        <rect x="78"  y="72"  width="5"  height="828" fill="#0E0804" opacity="0.72"/>
+        <rect x="108" y="64"  width="4"  height="836" fill="#0E0804" opacity="0.62"/>
+        <rect x="122" y="64"  width="9"  height="836" fill="#623820" opacity="0.54"/>
+        {/* bark crack lines */}
+        <rect x="74" y="210" width="60" height="1.5" fill="#855030" opacity="0.36"/>
+        <rect x="74" y="400" width="60" height="1.5" fill="#855030" opacity="0.30"/>
+        <rect x="74" y="590" width="60" height="1.5" fill="#855030" opacity="0.34"/>
+        <rect x="74" y="768" width="60" height="1"   fill="#855030" opacity="0.28"/>
+
+        {/* Trunk C: right-edge pine */}
+        <polygon points="378,900 390,140 420,132 432,900" fill="url(#barkRedR)"/>
+        <rect x="382" y="142" width="4"  height="758" fill="#0E0804" opacity="0.72"/>
+        <rect x="416" y="134" width="8"  height="766" fill="#4E2818" opacity="0.55"/>
+        <rect x="378" y="278" width="54" height="1.5" fill="#855030" opacity="0.34"/>
+        <rect x="378" y="498" width="54" height="1.5" fill="#855030" opacity="0.28"/>
+        <rect x="378" y="698" width="54" height="1"   fill="#855030" opacity="0.25"/>
 
         {/* Forest floor */}
         <rect x="0" y="730" width="420" height="170" fill="url(#groundL)"/>
@@ -192,7 +219,7 @@ export default function HomeScreen() {
 
           {/* Tagline */}
           <p
-            className="mt-3 font-serif text-[14px] italic tracking-[0.02em] text-parchment/55"
+            className="mt-3 font-serif text-[14px] italic tracking-[0.02em] text-parchment/72"
             style={{ textShadow: '0 1px 10px rgba(0,0,0,0.95)' }}
           >
             photographic hide &amp; seek
@@ -202,17 +229,17 @@ export default function HomeScreen() {
           <div className="mt-7 flex">
             <div className="flex-1">
               <div className="font-display text-[22px] font-bold leading-none text-gold" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.9)' }}>4.2k</div>
-              <div className="mt-[3px] font-display text-[9px] font-semibold uppercase tracking-[0.15em] text-parchment/38">Players</div>
+              <div className="mt-[3px] font-display text-[9px] font-semibold uppercase tracking-[0.15em] text-parchment/58">Players</div>
             </div>
             <div className="mx-4 w-px bg-gold/22" />
             <div className="flex-1">
               <div className="font-display text-[22px] font-bold leading-none text-gold" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.9)' }}>891</div>
-              <div className="mt-[3px] font-display text-[9px] font-semibold uppercase tracking-[0.15em] text-parchment/38">Hunts run</div>
+              <div className="mt-[3px] font-display text-[9px] font-semibold uppercase tracking-[0.15em] text-parchment/58">Hunts run</div>
             </div>
             <div className="mx-4 w-px bg-gold/22" />
             <div className="flex-1">
               <div className="font-display text-[22px] font-bold leading-none text-gold" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.9)' }}>32</div>
-              <div className="mt-[3px] font-display text-[9px] font-semibold uppercase tracking-[0.15em] text-parchment/38">Countries</div>
+              <div className="mt-[3px] font-display text-[9px] font-semibold uppercase tracking-[0.15em] text-parchment/58">Countries</div>
             </div>
           </div>
         </div>
@@ -228,7 +255,7 @@ export default function HomeScreen() {
               ◉ Join with Code
             </Button>
           </div>
-          <div className="mt-3.5 flex items-center justify-center gap-2 font-display text-[10px] font-semibold uppercase tracking-[0.12em] text-parchment/28">
+          <div className="mt-3.5 flex items-center justify-center gap-2 font-display text-[10px] font-semibold uppercase tracking-[0.12em] text-parchment/48">
             <span>3 friends min.</span>
             <span>·</span>
             <span>outdoors recommended</span>
