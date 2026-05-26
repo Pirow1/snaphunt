@@ -1,16 +1,9 @@
-// Matches snaphunt.html #screen-wait.
-// "TRAP SET" stamp + floating eye SVG + live seeker tracking from the
-// presence channel + countdown until expires_at. Subscribes to incoming
-// submissions on the current round and toasts each verifying/escalating
-// event with the seeker's emoji + name.
-
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { useStore } from '../lib/store';
 import { supabase } from '../lib/supabase';
 import { TopBar, TopBarBadge } from '../components/ui/TopBar';
 import { useCountdown } from '../hooks/useCountdown';
-import { MiniLeaderboard } from '../components/game/MiniLeaderboard';
 import type { Player } from '../lib/types';
 
 type PresenceMeta = {
@@ -22,12 +15,12 @@ type PresenceMeta = {
 
 type Tracked = { id: string; name: string; emoji: string; distance: number };
 
-function tempFor(d: number): { label: string; tone: 'blaze' | 'gold' | 'ink' } {
-  if (d < 20) return { label: 'BURNING', tone: 'blaze' };
-  if (d < 50) return { label: 'hot', tone: 'blaze' };
+function tempFor(d: number): { label: string; tone: 'ember' | 'gold' | 'parchment' } {
+  if (d < 20) return { label: 'BURNING', tone: 'ember' };
+  if (d < 50) return { label: 'hot', tone: 'ember' };
   if (d < 120) return { label: 'warm', tone: 'gold' };
-  if (d < 300) return { label: 'cold', tone: 'ink' };
-  return { label: 'frozen', tone: 'ink' };
+  if (d < 300) return { label: 'cold', tone: 'parchment' };
+  return { label: 'frozen', tone: 'parchment' };
 }
 
 export default function HiderWaitScreen() {
@@ -41,8 +34,6 @@ export default function HiderWaitScreen() {
   const countdown = useCountdown(round?.expires_at ?? null);
   const [tracked, setTracked] = useState<Tracked[]>([]);
 
-  // Subscribe to the presence channel (same one seekers .track() on) but as a
-  // pure listener — no key, no track().
   const presenceRef = useRef<RealtimeChannel | null>(null);
   useEffect(() => {
     if (!session || !authUserId) return;
@@ -72,8 +63,6 @@ export default function HiderWaitScreen() {
     };
   }, [session?.id, authUserId]);
 
-  // Submission lifecycle → toasts. We read from the store's submissions map
-  // (useSession's broadcast listener keeps it fresh) and dedupe by phase.
   const playerById = useMemo(() => {
     const m = new Map<string, Player>();
     for (const p of players) m.set(p.id, p);
@@ -109,27 +98,23 @@ export default function HiderWaitScreen() {
   }, [submissions, round?.id, playerById, pushToast]);
 
   return (
-    <main className="flex h-full w-full flex-col bg-cream text-ink" data-testid="hider-wait">
-      <TopBar title="Trap Active" right={<TopBarBadge tone="dark">Hider</TopBarBadge>} />
-
-      <div className="px-[22px] pt-2.5">
-        <MiniLeaderboard />
-      </div>
+    <main className="flex h-full w-full flex-col bg-forest-dark text-parchment" data-testid="hider-wait">
+      <TopBar title="Trap Active" right={<TopBarBadge>Hider</TopBarBadge>} />
 
       <div className="px-[22px] py-3 text-center">
         <span
-          className="inline-block rotate-[-3deg] bg-blaze px-[18px] py-1.5 font-display text-[12px] font-extrabold uppercase tracking-[0.25em] text-cream shadow-brutal"
+          className="inline-block rotate-[-3deg] rounded-[2px] bg-ember px-[18px] py-1.5 font-display text-[12px] font-extrabold uppercase tracking-[0.25em] text-parchment"
           data-testid="trap-stamp"
         >
           Trap Set
         </span>
-        <h2 className="mt-3.5 font-display text-[38px] font-extrabold uppercase leading-[0.9] tracking-[-0.04em] font-squeeze">
+        <h2 className="mt-3.5 font-display text-[38px] font-extrabold uppercase leading-[0.9] tracking-[-0.04em] font-squeeze text-parchment">
           Seekers
           <br />
           Are Out There.
         </h2>
-        <p className="mt-3 font-serif text-base italic text-ink-soft">
-          Watch them squirm <span className="font-display text-blaze">✦</span>{' '}
+        <p className="mt-3 font-serif text-base italic text-parchment/60">
+          Watch them squirm <span className="font-display text-ember">✦</span>{' '}
           <span data-testid="hider-countdown">{countdown.text} left</span>
         </p>
       </div>
@@ -137,17 +122,17 @@ export default function HiderWaitScreen() {
       <div className="flex justify-center py-6">
         <div className="h-[180px] w-[180px] animate-wait-float">
           <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="h-full w-full">
-            <ellipse cx="100" cy="100" rx="90" ry="55" fill="none" stroke="#1A1614" strokeWidth="4" />
-            <circle cx="100" cy="100" r="40" fill="#E94F2A" />
-            <circle cx="100" cy="100" r="20" fill="#1A1614" />
-            <circle cx="92" cy="92" r="6" fill="#F4E8D0" />
+            <ellipse cx="100" cy="100" rx="90" ry="55" fill="none" stroke="#C8A84B" strokeWidth="3" opacity="0.6"/>
+            <circle cx="100" cy="100" r="40" fill="#C84A1A" />
+            <circle cx="100" cy="100" r="20" fill="#0E1A0A" />
+            <circle cx="92" cy="92" r="6" fill="#F5ECD7" />
             <path
               d="M 30 100 Q 100 50 170 100"
               fill="none"
-              stroke="#1A1614"
-              strokeWidth="3"
+              stroke="#C8A84B"
+              strokeWidth="2"
               strokeLinecap="round"
-              opacity="0.5"
+              opacity="0.4"
             />
           </svg>
         </div>
@@ -158,30 +143,30 @@ export default function HiderWaitScreen() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-[22px] pb-5">
-        <span className="block pb-2.5 font-display text-[11px] font-extrabold uppercase tracking-[0.2em] text-ink-soft">
+        <span className="block pb-2.5 font-display text-[11px] font-extrabold uppercase tracking-[0.2em] text-parchment/60">
           Live Tracking
         </span>
         {tracked.length === 0 ? (
-          <div className="border-2 border-dashed border-ink/30 bg-cream-2 px-4 py-5 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-ink-soft">
+          <div className="rounded-[3px] border border-gold/15 bg-forest-mid/40 px-4 py-5 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-parchment/40">
             Waiting for the hunt to begin…
           </div>
         ) : (
           <ul className="flex flex-col gap-2" data-testid="seeker-list">
             {tracked.map((s) => {
               const t = tempFor(s.distance);
-              const dotColor = t.tone === 'blaze' ? 'bg-blaze' : t.tone === 'gold' ? 'bg-gold' : 'bg-ink';
+              const dotColor = t.tone === 'ember' ? 'bg-ember' : t.tone === 'gold' ? 'bg-gold' : 'bg-parchment/40';
               return (
                 <li
                   key={s.id}
-                  className="flex items-center gap-3 border-2 border-ink bg-cream-2 px-3.5 py-3.5"
+                  className="flex items-center gap-3 rounded-[3px] border border-gold/20 bg-forest-mid/50 px-3.5 py-3.5"
                   data-testid="seeker-row"
                   data-seeker={s.id}
                 >
-                  <span className={`block h-2 w-2 rounded-full ${dotColor}`} aria-hidden="true" />
-                  <span className="font-display text-[15px] font-extrabold">
+                  <span className={`block h-2 w-2 animate-pulse rounded-full ${dotColor}`} aria-hidden="true" />
+                  <span className="font-display text-[15px] font-extrabold text-parchment">
                     {s.emoji} {s.name}
                   </span>
-                  <span className="ml-auto font-mono text-[13px] font-bold">
+                  <span className="ml-auto font-mono text-[13px] font-bold text-gold">
                     {s.distance}m · {t.label}
                   </span>
                 </li>

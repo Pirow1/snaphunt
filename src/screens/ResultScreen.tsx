@@ -1,8 +1,3 @@
-// Matches snaphunt.html #screen-result — banner with MATCH/NO MATCH +
-// similarity + points, side-by-side photos, AI verdict quote, action buttons.
-// Subtitle reads "DECIDED LOCALLY" / "REJECTED LOCALLY · NO API CALL" /
-// "VERIFIED BY CLAUDE" per submission.decision_source.
-
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useStore } from '../lib/store';
@@ -21,8 +16,6 @@ export default function ResultScreen() {
   const [targetUrl, setTargetUrl] = useState<string | null>(null);
   const [seekerUrl, setSeekerUrl] = useState<string | null>(null);
 
-  // Load this seeker's submission (don't trust local store snapshot — Cloud
-  // branch may not have populated cloud_* fields yet at the moment of nav).
   useEffect(() => {
     let cancelled = false;
     if (!submissionId) return;
@@ -33,9 +26,6 @@ export default function ResultScreen() {
     return () => { cancelled = true; };
   }, [submissionId]);
 
-  // Fire success/fail audio + haptic exactly once per submission as soon as
-  // we have its verdict. Re-mounting on /game route changes is fine — the
-  // ref scopes "once per submissionId".
   const playedFor = useRef<string | null>(null);
   useEffect(() => {
     if (!submission || submission.status !== 'verified') return;
@@ -50,7 +40,6 @@ export default function ResultScreen() {
     }
   }, [submission?.id, submission?.status, submission?.is_match]);
 
-  // Signed URLs for both photos.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -68,7 +57,7 @@ export default function ResultScreen() {
 
   if (!submission) {
     return (
-      <main className="grid h-full place-items-center bg-cream font-mono text-xs uppercase tracking-[0.25em] text-ink-soft">
+      <main className="grid h-full place-items-center bg-forest-dark font-mono text-xs uppercase tracking-[0.25em] text-parchment/50">
         loading verdict…
       </main>
     );
@@ -85,26 +74,30 @@ export default function ResultScreen() {
         ? 'Rejected Locally · No API Call'
         : 'Verified by Claude';
 
+  const bannerBg = isMatch
+    ? 'bg-[rgba(20,58,20,0.9)]'
+    : 'bg-[rgba(90,28,14,0.9)]';
+
   return (
-    <main className="flex h-full w-full flex-col bg-cream text-ink" data-testid="result">
-      <div className={`px-[22px] pb-4 pt-7 text-center ${isMatch ? 'bg-forest text-cream' : 'bg-blaze text-cream'}`}>
+    <main className="flex h-full w-full flex-col bg-forest-dark text-parchment" data-testid="result">
+      <div className={`px-[22px] pb-4 pt-7 text-center ${bannerBg}`}>
         <div
-          className="font-display text-[60px] font-extrabold uppercase leading-[0.85] tracking-[-0.04em] font-squeeze"
+          className="font-display text-[56px] font-extrabold uppercase leading-[0.85] tracking-[-0.04em] font-squeeze text-parchment"
           data-testid="result-status"
         >
           {isMatch ? 'A Match!' : 'No Match'}
         </div>
         {similarityPct !== null && (
-          <div className="mt-2 font-mono text-[13px] tracking-[0.15em] opacity-85" data-testid="result-sim">
+          <div className="mt-2 font-mono text-[12px] tracking-[0.15em] text-gold opacity-80" data-testid="result-sim">
             Similarity · {similarityPct}%
           </div>
         )}
         {isMatch && round?.point_value && (
-          <div className="mt-3.5 inline-block border-2 border-ink bg-gold px-[18px] py-2 font-display text-[22px] font-extrabold text-ink shadow-brutal">
+          <div className="mt-3.5 inline-block rotate-[-3deg] rounded-[2px] bg-gold px-[18px] py-2 font-display text-[20px] font-extrabold text-forest-dark">
             +{round.point_value}
           </div>
         )}
-        <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.2em] opacity-80" data-testid="result-subtitle">
+        <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.2em] opacity-80 text-gold" data-testid="result-subtitle">
           {subtitle}
         </div>
       </div>
@@ -112,15 +105,15 @@ export default function ResultScreen() {
       <div className="flex flex-1 flex-col gap-4 px-[22px] py-5">
         <div className="grid grid-cols-2 gap-2.5">
           {[{ url: targetUrl, label: 'Target' }, { url: seekerUrl, label: 'Yours' }].map((cell) => (
-            <div key={cell.label} className="relative aspect-square overflow-hidden border-2 border-ink">
+            <div key={cell.label} className="relative aspect-square overflow-hidden rounded-[3px] border border-gold/25">
               {cell.url ? (
                 <img src={cell.url} alt={cell.label} className="h-full w-full object-cover" />
               ) : (
-                <div className="grid h-full w-full place-items-center bg-cream-2 font-mono text-[10px] text-ink-soft">
+                <div className="grid h-full w-full place-items-center bg-forest-mid/50 font-mono text-[10px] text-parchment/40">
                   {cell.label === 'Yours' ? '(not uploaded)' : '…'}
                 </div>
               )}
-              <div className="absolute bottom-0 left-0 right-0 bg-ink py-0.5 text-center font-display text-[10px] font-extrabold uppercase tracking-[0.15em] text-cream">
+              <div className="absolute bottom-0 left-0 right-0 bg-[rgba(10,18,8,0.85)] py-0.5 text-center font-display text-[10px] font-extrabold uppercase tracking-[0.2em] text-gold">
                 {cell.label}
               </div>
             </div>
@@ -128,24 +121,18 @@ export default function ResultScreen() {
         </div>
 
         {submission.cloud_reasoning && (
-          <div className="relative border-2 border-ink bg-cream-2 p-4">
-            <span className="absolute -top-2.5 left-3.5 bg-ink px-2 py-0.5 font-display text-[10px] font-extrabold uppercase tracking-[0.15em] text-cream">
+          <div className="relative rounded-[3px] border border-gold/25 bg-forest-mid/50 p-4">
+            <span className="absolute -top-2.5 left-3.5 rounded-[2px] bg-gold px-2 py-0.5 font-display text-[9px] font-extrabold uppercase tracking-[0.2em] text-forest-dark">
               AI Verdict
             </span>
-            <p className="font-serif text-[15px] italic leading-snug">&ldquo;{submission.cloud_reasoning}&rdquo;</p>
+            <p className="font-serif text-[14px] italic leading-snug text-parchment-2">&ldquo;{submission.cloud_reasoning}&rdquo;</p>
           </div>
         )}
 
         <div className="mt-auto flex flex-col gap-2">
-          {isMatch ? (
-            <Button variant="primary" onClick={() => { setCurrentSubmissionId(null); go('/'); }} data-testid="result-home">
-              Back to Home
-            </Button>
-          ) : (
-            <Button variant="primary" onClick={() => setCurrentSubmissionId(null)} data-testid="result-keep-hunting">
-              Keep Hunting
-            </Button>
-          )}
+          <Button variant="primary" onClick={() => { setCurrentSubmissionId(null); go('/'); }} data-testid="result-home">
+            Back to Home
+          </Button>
         </div>
       </div>
     </main>

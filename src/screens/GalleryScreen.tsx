@@ -1,9 +1,3 @@
-// End-of-game recap (spec §12.11). Loads every round + each round's winning
-// submission for the session, renders one card per round with target/found
-// photos + AI quote + LOCAL/CLAUDE stamp, then a scoreboard sorted desc with
-// the current player highlighted. "Play Again" returns to / and clears the
-// in-memory session.
-
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -43,7 +37,6 @@ export default function GalleryScreen() {
       const rounds = (rs ?? []) as Round[];
       const players = (ps ?? []) as Player[];
 
-      // For each finished round with a winner, pull the matching submission.
       const winningSubmissions = new Map<string, Submission>();
       await Promise.all(
         rounds.map(async (r) => {
@@ -61,8 +54,6 @@ export default function GalleryScreen() {
       if (cancelled) return;
       setLoaded({ players, rounds, winningSubmissions });
 
-      // Sign URLs in parallel — target photo for every round, found photo
-      // only for rounds with a winner.
       const urls: Record<string, string> = {};
       await Promise.all(
         rounds.map(async (r) => {
@@ -98,26 +89,26 @@ export default function GalleryScreen() {
   };
 
   return (
-    <main className="flex min-h-full w-full flex-col bg-cream text-ink" data-testid="gallery">
-      <TopBar title="Hunt Recap" right={<TopBarBadge tone="dark">Final</TopBarBadge>} />
+    <main className="flex min-h-full w-full flex-col bg-forest-dark text-parchment" data-testid="gallery">
+      <TopBar title="Hunt Recap" right={<TopBarBadge>Final</TopBarBadge>} />
 
       <div className="px-[18px] py-5">
         <div className="text-center">
-          <h2 className="font-display text-[38px] font-extrabold uppercase leading-[0.9] tracking-[-0.04em] font-squeeze">
+          <h2 className="font-display text-[38px] font-extrabold uppercase leading-[0.9] tracking-[-0.04em] font-squeeze text-parchment">
             The
             <br />
             Souvenirs
           </h2>
-          <p className="mt-2 font-serif text-base italic text-ink-soft">every match, every miss</p>
+          <p className="mt-2 font-serif text-base italic text-parchment/60">every match, every miss</p>
         </div>
 
         <div className="mt-5 flex flex-col gap-3.5" data-testid="recap-list">
           {!loaded ? (
-            <div className="border-2 border-dashed border-ink/30 bg-cream-2 px-4 py-6 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-ink-soft">
+            <div className="rounded-[3px] border border-gold/15 bg-forest-mid/40 px-4 py-6 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-parchment/40">
               Loading recap…
             </div>
           ) : loaded.rounds.length === 0 ? (
-            <div className="border-2 border-dashed border-ink/30 bg-cream-2 px-4 py-6 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-ink-soft">
+            <div className="rounded-[3px] border border-gold/15 bg-forest-mid/40 px-4 py-6 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-parchment/40">
               No rounds were played.
             </div>
           ) : (
@@ -128,24 +119,28 @@ export default function GalleryScreen() {
               const isMatch = !!sub;
               const isLegendary = r.difficulty === 'legendary' && isMatch;
               const verdictText = isLegendary ? 'Legendary' : isMatch ? 'Match' : 'No Match';
-              const verdictBg = isLegendary ? 'bg-gold text-ink' : isMatch ? 'bg-blaze text-cream' : 'bg-ink text-cream';
+              const verdictBg = isLegendary
+                ? 'bg-gold text-forest-dark'
+                : isMatch
+                  ? 'bg-ember text-parchment'
+                  : 'bg-forest-mid/80 text-parchment/70';
               const source = sub?.decision_source;
               const sourceStamp = source === 'cloud' ? 'Claude' : source ? 'Local' : null;
               return (
                 <article
                   key={r.id}
-                  className="border-2 border-ink bg-cream-2 p-3.5 shadow-brutal"
+                  className="rounded-[4px] border border-gold/20 bg-forest-mid/40 p-3.5"
                   data-testid="recap-card"
                   data-round-number={r.round_number}
                   data-match={isMatch ? 'true' : 'false'}
                   data-source={source ?? 'none'}
                 >
                   <header className="mb-2.5 flex items-center justify-between">
-                    <span className="font-display text-[13px] font-extrabold uppercase tracking-[0.1em]">
+                    <span className="font-display text-[13px] font-extrabold uppercase tracking-[0.1em] text-parchment">
                       Round {String(r.round_number).padStart(2, '0')} · {hiderName} hid
                     </span>
                     <span
-                      className={`rotate-[-2deg] border-[1.5px] border-ink px-2 py-0.5 font-display text-[10px] font-extrabold uppercase tracking-[0.18em] ${verdictBg}`}
+                      className={`rotate-[-2deg] rounded-[2px] border border-gold/25 px-2 py-0.5 font-display text-[10px] font-extrabold uppercase tracking-[0.18em] ${verdictBg}`}
                       data-testid="recap-stamp"
                     >
                       {verdictText}
@@ -158,7 +153,7 @@ export default function GalleryScreen() {
                   </div>
 
                   {sub?.cloud_reasoning && (
-                    <p className="mt-2.5 font-serif text-[13px] italic leading-snug">
+                    <p className="mt-2.5 font-serif text-[13px] italic leading-snug text-parchment/80">
                       &ldquo;{sub.cloud_reasoning}&rdquo;
                     </p>
                   )}
@@ -166,7 +161,7 @@ export default function GalleryScreen() {
                   {sourceStamp && (
                     <div className="mt-2 flex justify-end">
                       <span
-                        className={`border-[1.5px] border-ink px-1.5 py-0.5 font-display text-[9px] font-extrabold uppercase tracking-[0.18em] ${source === 'cloud' ? 'bg-plum text-cream' : 'bg-cream text-ink'}`}
+                        className={`rounded-[2px] border border-gold/25 px-1.5 py-0.5 font-display text-[9px] font-extrabold uppercase tracking-[0.18em] ${source === 'cloud' ? 'bg-plum text-parchment' : 'bg-forest-mid text-parchment/70'}`}
                         data-testid="recap-source"
                       >
                         {sourceStamp}
@@ -180,7 +175,7 @@ export default function GalleryScreen() {
         </div>
       </div>
 
-      <div className="mt-4 bg-ink px-4 py-4 text-cream">
+      <div className="mt-4 bg-[rgba(10,18,8,0.7)] px-4 py-4 text-parchment">
         <div className="mb-2 font-display text-[11px] font-extrabold uppercase tracking-[0.2em] text-gold">
           ★ Final Standings ★
         </div>
@@ -190,15 +185,15 @@ export default function GalleryScreen() {
             return (
               <li
                 key={p.id}
-                className="flex items-center gap-2.5 border-b border-dashed border-cream/30 py-2 last:border-b-0"
+                className="flex items-center gap-2.5 border-b border-gold/10 py-2 last:border-b-0"
                 data-testid="scoreboard-row"
                 data-rank={i + 1}
                 data-you={isYou ? 'true' : 'false'}
               >
-                <span className="font-mono text-[12px] opacity-60">
+                <span className="font-mono text-[12px] text-parchment/50">
                   {String(i + 1).padStart(2, '0')}
                 </span>
-                <span className={`flex-1 font-display text-[15px] font-bold ${isYou ? 'text-gold' : ''}`}>
+                <span className={`flex-1 font-display text-[14px] font-bold ${isYou ? 'text-gold' : 'text-parchment'}`}>
                   {isYou ? 'You ' : ''}{p.emoji} {isYou ? '' : p.name}
                 </span>
                 <span className="font-mono text-[13px] font-bold text-gold">{p.score} pts</span>
@@ -219,15 +214,15 @@ export default function GalleryScreen() {
 
 function PhotoCell({ url, label, placeholder = null }: { url?: string; label: string; placeholder?: string | null }) {
   return (
-    <div className="relative aspect-square overflow-hidden border-[1.5px] border-ink">
+    <div className="relative aspect-square overflow-hidden rounded-[3px] border border-gold/20">
       {url ? (
         <img src={url} alt={label} className="h-full w-full object-cover" />
       ) : (
-        <div className="grid h-full w-full place-items-center bg-cream-2 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-soft">
+        <div className="grid h-full w-full place-items-center bg-forest-mid/50 font-mono text-[10px] uppercase tracking-[0.18em] text-parchment/40">
           {placeholder ?? '…'}
         </div>
       )}
-      <span className="absolute right-1.5 top-1.5 border border-ink bg-cream px-1.5 py-0.5 font-display text-[9px] font-extrabold uppercase tracking-[0.15em]">
+      <span className="absolute right-1.5 top-1.5 rounded-[2px] bg-[rgba(10,18,8,0.85)] px-1.5 py-0.5 font-display text-[9px] font-extrabold uppercase tracking-[0.15em] text-gold">
         {label}
       </span>
     </div>

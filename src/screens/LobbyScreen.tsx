@@ -26,8 +26,6 @@ export default function LobbyScreen() {
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
 
-  // When the host flips session.status to 'playing', every client (host
-  // and guests) sails to the game screen via View Transition.
   useEffect(() => {
     if (session?.status === 'playing' && sessionId) {
       go(`/game/${sessionId}`);
@@ -42,15 +40,13 @@ export default function LobbyScreen() {
   const [recentJoinId, setRecentJoinId] = useState<string | null>(null);
   const prevPlayerIds = useRef<Set<string>>(new Set());
 
-  // QR encodes the deep-link join URL.
   useEffect(() => {
     if (!code || !canvasRef.current) return;
     const url = `${window.location.origin}/join/${code}`;
-    QRCode.toCanvas(canvasRef.current, url, { width: 156, margin: 0, color: { dark: '#1A1614', light: '#F4E8D0' } })
+    QRCode.toCanvas(canvasRef.current, url, { width: 156, margin: 0, color: { dark: '#0E1A0A', light: '#F5ECD7' } })
       .catch((e) => setQrError(String(e)));
   }, [code]);
 
-  // Track new-player arrivals to apply the gold→cream-2 pulse for 1.2s.
   useEffect(() => {
     const seen = prevPlayerIds.current;
     const fresh = players.find((p) => !seen.has(p.id));
@@ -67,27 +63,28 @@ export default function LobbyScreen() {
   if (!sessionId) return null;
 
   return (
-    <main className="flex h-full w-full flex-col bg-cream text-ink">
+    <main className="flex h-full w-full flex-col bg-forest-dark text-parchment">
       <TopBar title="Hunt Lobby" back="/" right={<TopBarBadge tone={isHost ? 'gold' : 'dark'}>{isHost ? 'Host' : 'Guest'}</TopBarBadge>} />
 
       <div className="flex flex-1 flex-col overflow-y-auto px-[22px] pt-5 pb-7">
         <div className="text-center">
-          <div className="font-display text-[11px] font-bold uppercase tracking-[0.25em] text-ink-soft">
+          <div className="font-display text-[11px] font-bold uppercase tracking-[0.25em] text-parchment/60">
             Share this code
           </div>
           <div
-            className="my-1.5 font-mono text-[52px] font-bold tracking-[0.15em]"
+            className="my-1.5 font-mono text-[52px] font-bold tracking-[0.12em] text-gold"
+            style={{ textShadow: '0 0 20px rgba(200,168,75,0.3)' }}
             data-testid="lobby-code"
           >
             {code || '······'}
           </div>
 
-          <div className="relative mx-auto mt-3 w-fit border-2 border-ink bg-cream p-4 shadow-[6px_6px_0_var(--ink)]">
-            <span className="absolute left-1/2 top-[-10px] -translate-x-1/2 bg-blaze px-2.5 py-0.5 font-display text-[10px] font-extrabold uppercase tracking-[0.2em] text-cream">
+          <div className="relative mx-auto mt-3 w-fit rounded-[3px] border-2 border-gold/50 bg-parchment p-3.5 shadow-[0_0_0_4px_rgba(200,168,75,0.08)]">
+            <span className="absolute left-1/2 top-[-10px] -translate-x-1/2 rounded-[2px] bg-gold px-2.5 py-0.5 font-display text-[9px] font-extrabold uppercase tracking-[0.2em] text-forest-dark">
               Scan to Join
             </span>
             {qrError ? (
-              <div className="grid h-[156px] w-[156px] place-items-center text-xs text-ink-soft">QR error</div>
+              <div className="grid h-[156px] w-[156px] place-items-center text-xs text-ink/60">QR error</div>
             ) : (
               <canvas ref={canvasRef} className="block" aria-label={`QR code for join code ${code}`} />
             )}
@@ -96,14 +93,14 @@ export default function LobbyScreen() {
 
         <div className="mt-5">
           <div className="mb-2 flex items-center justify-between">
-            <span className="font-display text-[11px] font-bold uppercase tracking-[0.18em]">Players Joined</span>
-            <span className="font-mono text-[11px] font-bold tracking-[0.18em]" data-testid="player-count">
+            <span className="font-display text-[11px] font-bold uppercase tracking-[0.18em] text-parchment/60">Players Joined</span>
+            <span className="font-mono text-[11px] font-bold tracking-[0.18em] text-gold" data-testid="player-count">
               {players.length} / {MAX_PLAYERS}
             </span>
           </div>
           <div className="flex flex-col gap-2">
             {players.length === 0 ? (
-              <div className="border-2 border-dashed border-ink/30 bg-cream-2/50 py-4 text-center font-mono text-xs text-ink-soft">
+              <div className="rounded-[3px] border border-gold/15 bg-forest-mid/40 py-4 text-center font-mono text-xs text-parchment/40">
                 waiting…
               </div>
             ) : (
@@ -120,15 +117,15 @@ export default function LobbyScreen() {
         </div>
 
         {!visionReady && (
-          <div className="mt-4 flex items-center gap-2 border-2 border-ink bg-cream-2 px-3 py-2 font-mono text-[11px] uppercase tracking-[0.15em]">
+          <div className="mt-4 flex items-center gap-2 rounded-[3px] border border-gold/20 bg-forest-mid/50 px-3 py-2 font-mono text-[11px] uppercase tracking-[0.15em] text-parchment">
             <span
               aria-hidden="true"
-              className="inline-block h-2 w-2 animate-pulse rounded-full bg-blaze"
+              className="inline-block h-2 w-2 animate-pulse rounded-full bg-ember"
             />
             <span>Vision {visionLoadProgress}%</span>
-            <div className="ml-auto h-1.5 w-20 overflow-hidden border border-ink bg-cream">
+            <div className="ml-auto h-1.5 w-20 overflow-hidden rounded-[2px] border border-gold/30 bg-forest-dark">
               <div
-                className="h-full bg-blaze transition-[width] duration-200"
+                className="h-full bg-gold transition-[width] duration-200"
                 style={{ width: `${Math.min(100, visionLoadProgress)}%` }}
               />
             </div>
@@ -145,24 +142,22 @@ export default function LobbyScreen() {
                 setStarting(true);
                 try {
                   await startGame();
-                  // The useEffect above will navigate everyone once the
-                  // session.status='playing' broadcast lands.
                 } catch (e) {
                   const msg = e instanceof Error ? e.message : 'Could not start.';
                   setStartError(msg);
                   setStarting(false);
                 }
               }}
-              className="flex w-full items-center justify-center gap-2.5 rounded-[2px] border-2 border-ink bg-blaze px-[22px] py-[18px] font-display text-[17px] font-bold uppercase tracking-tight text-cream shadow-brutal transition-[transform,box-shadow] duration-[80ms] hover:bg-blaze-deep active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_var(--ink)] disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex w-full items-center justify-center gap-2.5 rounded-[3px] border-[1.5px] border-gold bg-gold px-[22px] py-[17px] font-display text-[15px] font-extrabold uppercase tracking-[0.06em] text-forest-dark backdrop-blur-sm transition-transform duration-[80ms] active:scale-[0.98] hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
               data-testid="begin-hunt"
             >
               {starting ? 'Starting…' : 'Begin the Hunt →'}
             </button>
             {startError && (
-              <p className="mt-3 text-center font-display text-xs font-bold uppercase tracking-[0.15em] text-blaze">{startError}</p>
+              <p className="mt-3 text-center font-display text-xs font-bold uppercase tracking-[0.15em] text-ember">{startError}</p>
             )}
             {!startError && players.length < MIN_TO_START && (
-              <p className="mt-3 text-center font-mono text-[10px] text-ink-soft">
+              <p className="mt-3 text-center font-mono text-[10px] text-parchment/50">
                 Need at least {MIN_TO_START} players to start ({players.length}/{MIN_TO_START})
               </p>
             )}

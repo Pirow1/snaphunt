@@ -1,12 +1,12 @@
-/* Paper grain overlay on the app frame — sits above content via z-index. */
+/* Subtle film-grain overlay on the app frame — sits above content via z-index. */
 #app::before {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 100;
-  background-image: radial-gradient(circle at 1px 1px, rgba(26, 22, 20, 0.06) 1px, transparent 0);
+  background-image: radial-gradient(circle at 1px 1px, rgba(245, 236, 215, 0.04) 1px, transparent 0);
   background-size: 3px 3px;
-  mix-blend-mode: multiply;
-  opacity: 0.7;
+  mix-blend-mode: overlay;
+  opacity: 0.8;
 }

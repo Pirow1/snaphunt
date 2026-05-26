@@ -14,6 +14,7 @@ import WinnerRevealScreen from './screens/WinnerRevealScreen';
 import GalleryScreen from './screens/GalleryScreen';
 import VisionTestScreen from './screens/VisionTestScreen';
 import CompassTestScreen from './screens/CompassTestScreen';
+import TrapTestScreen from './screens/TrapTestScreen';
 import { ToastHost } from './components/ui/ToastHost';
 
 export default function App() {
@@ -85,6 +86,7 @@ export default function App() {
         <Route path="/gallery/:sessionId" element={<GalleryScreen />} />
         {import.meta.env.DEV && <Route path="/vision-test" element={<VisionTestScreen />} />}
         {import.meta.env.DEV && <Route path="/compass-test" element={<CompassTestScreen />} />}
+        {import.meta.env.DEV && <Route path="/trap-test" element={<TrapTestScreen />} />}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <ToastHost />

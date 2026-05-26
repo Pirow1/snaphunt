@@ -14,7 +14,6 @@ export default function JoinScreen() {
   const authUserId = useStore((s) => s.identity.authUserId);
   const joinSession = useStore((s) => s.joinSession);
 
-  // Deep-linked code prefill: /join/ABC123 → start with that value.
   const [code, setCode] = useState(() => (params.code ? normalizeJoinCode(params.code).slice(0, 6) : ''));
   const [step, setStep] = useState<'code' | 'identity'>(params.code && isValidJoinCode(normalizeJoinCode(params.code)) ? 'identity' : 'code');
   const [name, setName] = useState('');
@@ -22,7 +21,6 @@ export default function JoinScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Once the user types 6 valid chars, move to the identity step.
   useEffect(() => {
     if (step === 'code' && code.length === 6 && isValidJoinCode(code)) {
       setStep('identity');
@@ -43,32 +41,29 @@ export default function JoinScreen() {
     setSubmitting(true);
     setError(null);
     try {
-      const { sessionId, status } = await joinSession({ code, name: trimmedName, emoji });
-      // Late-joiners (hunt already in progress) skip the lobby and land
-      // directly in the game; the hider may still be setting their target.
-      go(status === 'playing' ? `/game/${sessionId}` : `/lobby/${sessionId}`);
+      const { sessionId } = await joinSession({ code, name: trimmedName, emoji });
+      go(`/lobby/${sessionId}`);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Could not join the hunt.';
       setError(msg);
       setSubmitting(false);
-      // Drop back to code step so they can fix it.
       if (msg.toLowerCase().includes('code')) setStep('code');
     }
   }
 
   return (
-    <main className="flex h-full w-full flex-col bg-cream text-ink">
+    <main className="flex h-full w-full flex-col bg-forest-dark text-parchment">
       <TopBar title="Join a Hunt" back="/" right={<TopBarBadge>Guest</TopBarBadge>} />
 
       <div className="flex flex-1 flex-col px-[22px] pt-6 pb-4">
         {step === 'code' ? (
           <>
-            <div className="text-center font-display text-[11px] font-bold uppercase tracking-[0.18em] text-ink-soft">
+            <div className="text-center font-display text-[11px] font-bold uppercase tracking-[0.18em] text-parchment/60">
               Enter 6-character code
             </div>
             <CodeInput value={code} onChange={setCode} />
             {error && (
-              <p className="mb-2 text-center font-display text-xs font-bold uppercase tracking-[0.15em] text-blaze">
+              <p className="mb-2 text-center font-display text-xs font-bold uppercase tracking-[0.15em] text-ember">
                 {error}
               </p>
             )}
@@ -76,24 +71,24 @@ export default function JoinScreen() {
         ) : (
           <>
             <div className="text-center">
-              <span className="font-display text-[11px] font-bold uppercase tracking-[0.18em] text-ink-soft">
+              <span className="font-display text-[11px] font-bold uppercase tracking-[0.18em] text-parchment/60">
                 Joining
               </span>
-              <div className="mt-1 font-mono text-3xl font-bold tracking-[0.15em]">{code}</div>
+              <div className="mt-1 font-mono text-3xl font-bold tracking-[0.15em] text-gold">{code}</div>
               <button
                 type="button"
                 onClick={() => {
                   setStep('code');
                   setCode('');
                 }}
-                className="mt-1 font-display text-[10px] font-bold uppercase tracking-[0.2em] text-ink-soft underline underline-offset-[3px]"
+                className="mt-1 font-display text-[10px] font-bold uppercase tracking-[0.2em] text-parchment/55 underline underline-offset-[3px]"
               >
                 change
               </button>
             </div>
 
             <section className="mt-6">
-              <label htmlFor="join-name" className="block font-display text-[11px] font-bold uppercase tracking-[0.25em] text-ink-soft">
+              <label htmlFor="join-name" className="block font-display text-[11px] font-bold uppercase tracking-[0.25em] text-parchment/60">
                 Your hunter name
               </label>
               <input
@@ -106,13 +101,13 @@ export default function JoinScreen() {
                 autoComplete="off"
                 spellCheck={false}
                 autoFocus
-                className="mt-3 w-full border-2 border-ink bg-cream px-4 py-3 font-mono text-2xl tracking-widest placeholder:text-ink/30 focus:bg-cream-2 focus:outline-none"
+                className="mt-3 w-full rounded-[3px] border-[1.5px] border-gold/25 bg-forest-mid/50 px-4 py-3 font-mono text-2xl tracking-widest text-parchment placeholder:text-parchment/30 focus:border-gold focus:bg-forest-mid/70 focus:outline-none"
               />
-              <div className="mt-1 text-right font-mono text-[10px] text-ink-soft">{trimmedName.length}/24</div>
+              <div className="mt-1 text-right font-mono text-[10px] text-parchment/50">{trimmedName.length}/24</div>
             </section>
 
             <section className="mt-4">
-              <span className="block font-display text-[11px] font-bold uppercase tracking-[0.25em] text-ink-soft">
+              <span className="block font-display text-[11px] font-bold uppercase tracking-[0.25em] text-parchment/60">
                 Pick a sigil
               </span>
               <div className="mt-3 grid grid-cols-6 gap-2">
@@ -125,8 +120,8 @@ export default function JoinScreen() {
                       onClick={() => setEmoji(e)}
                       aria-pressed={selected}
                       className={[
-                        'flex aspect-square items-center justify-center border-2 border-ink text-3xl transition-transform',
-                        selected ? 'bg-gold shadow-brutal' : 'bg-cream-2 active:translate-x-[2px] active:translate-y-[2px]',
+                        'flex aspect-square items-center justify-center rounded-[3px] border-[1.5px] text-3xl transition-transform',
+                        selected ? 'border-gold bg-gold/20' : 'border-gold/25 bg-forest-mid/50 active:scale-95',
                       ].join(' ')}
                     >
                       {e}
@@ -137,7 +132,7 @@ export default function JoinScreen() {
             </section>
 
             {error && (
-              <div className="mt-4 border-2 border-ink bg-blaze px-3 py-2 font-display text-sm font-bold text-cream">
+              <div className="mt-4 rounded-[3px] border border-ember/50 bg-ember/20 px-3 py-2 font-display text-sm font-bold text-parchment">
                 {error}
               </div>
             )}
@@ -147,12 +142,12 @@ export default function JoinScreen() {
                 type="button"
                 disabled={!canSubmit}
                 onClick={handleJoin}
-                className="flex w-full items-center justify-center gap-2.5 rounded-[2px] border-2 border-ink bg-blaze px-[22px] py-[18px] font-display text-[17px] font-bold uppercase tracking-tight text-cream shadow-brutal transition-[transform,box-shadow] duration-[80ms] hover:bg-blaze-deep active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_var(--ink)] disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex w-full items-center justify-center gap-2.5 rounded-[3px] border-[1.5px] border-gold bg-gold px-[22px] py-[17px] font-display text-[15px] font-extrabold uppercase tracking-[0.06em] text-forest-dark backdrop-blur-sm transition-transform duration-[80ms] active:scale-[0.98] hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {submitting ? '…Joining…' : '▶ Join the Hunt'}
               </button>
               {!authUserId && (
-                <p className="mt-3 text-center font-mono text-[10px] text-ink-soft">Waiting for anonymous sign-in…</p>
+                <p className="mt-3 text-center font-mono text-[10px] text-parchment/50">Waiting for anonymous sign-in…</p>
               )}
             </div>
           </>

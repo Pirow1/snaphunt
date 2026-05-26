@@ -8,7 +8,7 @@
 //     startNextRound() after a brief result-viewing pause
 //   round.status='finished' AND host AND last round → host calls
 //     finishSession() → session.status='finished' → everyone navigates to
-//     /gallery/:sessionId
+//     /game/:sessionId/winner
 
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -23,6 +23,8 @@ import SeekerHuntScreen from './SeekerHuntScreen';
 import VerifyingScreen from './VerifyingScreen';
 import ResultScreen from './ResultScreen';
 import RoundResultScreen from './RoundResultScreen';
+import EliminatedScreen from './EliminatedScreen';
+import { TrapOverlay } from '../components/game/TrapOverlay';
 
 const ROUND_END_PAUSE_MS = 8_000;
 // Grace window after round.status flips to 'finished' before swapping to
@@ -47,6 +49,9 @@ export default function GameRouter() {
   const resetAssists = useStore((s) => s.resetAssists);
 
   const [accepted, setAccepted] = useState(false);
+  const [lives, setLives] = useState(3);
+  const [showTrap, setShowTrap] = useState(false);
+  const [eliminated, setEliminated] = useState(false);
   const submissionId = useStore((s) => s.currentSubmissionId);
   const [submission, setSubmission] = useState<Submission | null>(null);
   const [showRoundResult, setShowRoundResult] = useState(false);
@@ -62,6 +67,9 @@ export default function GameRouter() {
       setCurrentSubmissionId(null);
       clearSubmissions();
       resetAssists();
+      setShowTrap(false);
+      setLives(3);
+      setEliminated(false);
       setShowRoundResult(false);
     }
     lastRoundId.current = round.id;
@@ -168,17 +176,29 @@ export default function GameRouter() {
     return <RoundResultScreen />;
   }
 
-  // Hider: capture pre-trap; wait while active.
+  // Hider: capture pre-trap; wait while active; "round over" until host
+  // advances (handled inside HiderWaitScreen via round.status check).
   if (isHider) {
     return round.status === 'pending' ? <HiderCaptureScreen /> : <HiderWaitScreen />;
   }
+
+  if (eliminated) return <EliminatedScreen />;
 
   // Seeker state machine.
   if (submissionId) {
     if (!submission || submission.status === 'pending') {
       return submission?.photo_path || submission === null ? <VerifyingScreen /> : <SeekerHuntScreen />;
     }
-    if (submission.status === 'verified') return <ResultScreen />;
+    if (submission.status === 'verified') {
+      const isMatch = submission.is_match;
+      if (isMatch === false && !showTrap) {
+        // Trigger trap — clear submission first so we return to hunting after.
+        setCurrentSubmissionId(null);
+        setShowTrap(true);
+        return <SeekerHuntScreen />;
+      }
+      return <ResultScreen />;
+    }
     if (submission.status === 'error') {
       // Edge function failed (toast already shown from store). Clear the
       // submission and let the seeker re-shoot.
@@ -186,13 +206,29 @@ export default function GameRouter() {
       return <SeekerHuntScreen />;
     }
   }
+
+  if (showTrap) {
+    return (
+      <TrapOverlay
+        lives={lives}
+        onSolve={() => setShowTrap(false)}
+        onFail={() => {
+          const next = lives - 1;
+          setLives(next);
+          setShowTrap(false);
+          if (next <= 0) setEliminated(true);
+        }}
+      />
+    );
+  }
+
   return <SeekerHuntScreen />;
 }
 
 function Centered({ text }: { text: string }) {
   return (
-    <main className="flex h-full w-full items-center justify-center bg-cream text-ink">
-      <div className="font-mono text-xs uppercase tracking-[0.25em] text-ink-soft">{text}</div>
+    <main className="flex h-full w-full items-center justify-center bg-forest-dark">
+      <div className="font-mono text-xs uppercase tracking-[0.25em] text-parchment/40">{text}</div>
     </main>
   );
 }

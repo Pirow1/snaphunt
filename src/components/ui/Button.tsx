@@ -8,14 +8,11 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children: ReactNode;
 };
 
-// Matches snaphunt.html .btn / .btn-primary / .btn-dark / .btn-gold / .btn-ghost
-// exactly: 2px ink border, 4px brutal shadow, active translates 3px and shrinks
-// shadow to 1px. Tailwind only; no inline styles.
 const VARIANT_CLASS: Record<Variant, string> = {
-  primary: 'bg-blaze text-cream hover:bg-blaze-deep',
-  dark:    'bg-ink   text-cream',
-  gold:    'bg-gold  text-ink',
-  ghost:   'bg-transparent text-ink border-transparent shadow-none active:translate-x-0 active:translate-y-0 active:shadow-none',
+  primary: 'bg-gold text-forest-dark border-gold font-extrabold hover:bg-gold-light',
+  dark:    'bg-[rgba(10,18,8,0.85)] text-gold border-gold/35',
+  gold:    'bg-gold text-forest-dark border-gold font-extrabold',
+  ghost:   'bg-transparent text-parchment/55 border-transparent active:scale-100',
 };
 
 export function Button({
@@ -27,11 +24,11 @@ export function Button({
   ...rest
 }: ButtonProps) {
   const base =
-    'flex w-full items-center justify-center gap-2.5 rounded-[2px] ' +
-    'border-2 border-ink px-[22px] py-[18px] ' +
-    'font-display text-[17px] font-bold uppercase tracking-tight ' +
-    'shadow-brutal transition-[transform,box-shadow] duration-[80ms] ' +
-    'active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_var(--ink)] ' +
+    'flex w-full items-center justify-center gap-2.5 rounded-[3px] ' +
+    'border-[1.5px] px-[22px] py-[17px] ' +
+    'font-display text-[15px] font-bold uppercase tracking-[0.06em] ' +
+    'backdrop-blur-sm transition-transform duration-[80ms] ' +
+    'active:scale-[0.98] ' +
     'disabled:opacity-40 disabled:cursor-not-allowed';
   return (
     <button

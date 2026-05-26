@@ -1,6 +1,3 @@
-// Matches snaphunt.html .target-card — brutal-shadow cream-2 card with
-// blurred photo + reveal-meta + gold-left-border hint strip.
-
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 
@@ -8,9 +5,7 @@ type TargetCardProps = {
   photoPath: string | null;
   hint: string | null;
   pointValue: number;
-  /** 0 = fully blurred, 1 / 2 / 3 = progressively sharper. */
   sharpenLevel: 0 | 1 | 2 | 3;
-  /** Whether the hint has been spent. */
   hintRevealed: boolean;
 };
 
@@ -33,14 +28,14 @@ export function TargetCard({ photoPath, hint, pointValue, sharpenLevel, hintReve
   const resolution = RESOLUTION_BY_LEVEL[sharpenLevel];
 
   return (
-    <div className="border-2 border-ink bg-cream-2 p-3.5 shadow-brutal" data-testid="target-card">
+    <div className="rounded-[4px] border border-gold/25 bg-forest-mid/50 p-3.5" data-testid="target-card">
       <div className="flex items-baseline justify-between">
-        <span className="font-display text-[11px] font-bold uppercase tracking-[0.18em]">Target Object</span>
-        <span className="font-display text-[11px] font-bold uppercase tracking-[0.18em] text-blaze">★ {pointValue} pts</span>
+        <span className="font-display text-[11px] font-bold uppercase tracking-[0.18em] text-parchment/60">Target Object</span>
+        <span className="font-display text-[11px] font-bold uppercase tracking-[0.18em] text-gold">★ {pointValue} pts</span>
       </div>
 
       <div
-        className="relative mt-2.5 h-[180px] w-full overflow-hidden border-2 border-ink bg-ink"
+        className="relative mt-2.5 h-[175px] w-full overflow-hidden rounded-[3px] border border-gold/20 bg-ink"
         style={{ viewTransitionName: 'target-photo' }}
       >
         {signedUrl ? (
@@ -53,17 +48,17 @@ export function TargetCard({ photoPath, hint, pointValue, sharpenLevel, hintReve
             data-blur={blur}
           />
         ) : (
-          <div className="grid h-full w-full place-items-center font-mono text-[10px] uppercase tracking-[0.25em] text-cream/40">
+          <div className="grid h-full w-full place-items-center font-mono text-[10px] uppercase tracking-[0.25em] text-parchment/30">
             target locked
           </div>
         )}
-        <div className="absolute bottom-2 left-2 bg-ink px-2 py-1 font-display text-[10px] font-bold uppercase tracking-[0.15em] text-cream">
+        <div className="absolute bottom-2 left-2 rounded-[2px] bg-[rgba(10,18,8,0.85)] px-2 py-1 font-display text-[10px] font-bold uppercase tracking-[0.15em] text-gold">
           Resolution: {resolution}%
         </div>
       </div>
 
-      <div className="mt-2.5 border-l-4 border-gold bg-cream px-3 py-2.5 font-serif text-[14px] italic text-ink">
-        <span className="block font-display text-[10px] font-normal not-italic uppercase tracking-[0.15em] text-ink-soft">
+      <div className="mt-2.5 rounded-[0_3px_3px_0] border-l-[3px] border-gold bg-[rgba(10,18,8,0.5)] px-3 py-2.5 font-serif text-[14px] italic text-parchment">
+        <span className="block font-display text-[10px] font-normal not-italic uppercase tracking-[0.15em] text-parchment/60">
           Hider&apos;s Hint
         </span>
         {hint && hintRevealed ? hint : hint ? '— tap USE HINT to reveal —' : '(no hint this round)'}

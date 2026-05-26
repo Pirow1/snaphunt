@@ -1,8 +1,3 @@
-// Matches snaphunt.html #screen-verify — only shown when local similarity
-// landed in the borderline band and we're awaiting a cloud verdict.
-// Theatrical: side-by-side photos with gold scan lines, "Cross-Referencing"
-// title, rotating step messages, progress bar, bouncing dot trail.
-
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useStore } from '../lib/store';
@@ -23,7 +18,6 @@ export default function VerifyingScreen() {
   const [targetUrl, setTargetUrl] = useState<string | null>(null);
   const [seekerUrl, setSeekerUrl] = useState<string | null>(null);
 
-  // Animate steps + progress over ~4s.
   useEffect(() => {
     const t = setInterval(() => {
       setStepIdx((i) => Math.min(STEPS.length - 1, i + 1));
@@ -32,7 +26,6 @@ export default function VerifyingScreen() {
     return () => clearInterval(t);
   }, []);
 
-  // Load signed URLs for the side-by-side photos.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -49,21 +42,22 @@ export default function VerifyingScreen() {
   }, [round?.photo_path, submissionId]);
 
   return (
-    <main className="flex h-full w-full flex-col items-center justify-center bg-ink px-6 text-cream">
+    <main className="flex h-full w-full flex-col items-center justify-center bg-forest-dark px-6 text-parchment">
       <div className="flex items-center gap-3" data-testid="verifying">
         <Photo url={targetUrl} label="Target" delay="0s" />
-        <span className="font-serif text-2xl italic text-cream-3">vs.</span>
+        <span className="font-serif text-2xl italic text-parchment/50">vs.</span>
         <Photo url={seekerUrl} label="Yours" delay="0.7s" />
       </div>
 
-      <h2 className="mt-7 font-display text-[34px] font-extrabold uppercase tracking-[-0.04em] text-gold font-squeeze">
+      <h2 className="mt-7 font-display text-[30px] font-extrabold uppercase tracking-[-0.04em] text-gold font-squeeze"
+        style={{ fontVariationSettings: "'wdth' 75" }}>
         Cross-Referencing
       </h2>
-      <p className="mt-2 font-serif text-base italic text-cream-3" data-testid="verify-step">
+      <p className="mt-2 font-serif text-base italic text-parchment/65" data-testid="verify-step">
         {STEPS[stepIdx]}
       </p>
 
-      <div className="mt-4 h-2.5 w-full max-w-[260px] overflow-hidden border-2 border-cream bg-ink-soft">
+      <div className="mt-4 h-2 w-full max-w-[260px] overflow-hidden rounded-[2px] border-[1.5px] border-gold/30 bg-forest-mid/80">
         <div className="h-full bg-gold transition-[width] duration-300" style={{ width: `${progress}%` }} />
       </div>
 
@@ -72,7 +66,7 @@ export default function VerifyingScreen() {
           <span
             key={i}
             aria-hidden="true"
-            className="block h-1.5 w-1.5 rounded-full bg-cream"
+            className="block h-1.5 w-1.5 rounded-full bg-gold"
             style={{ animation: `dotBounce 1.4s ${i * 0.15}s infinite`, opacity: 0.3 }}
           />
         ))}
@@ -88,10 +82,10 @@ export default function VerifyingScreen() {
 
 function Photo({ url, label, delay }: { url: string | null; label: string; delay: string }) {
   return (
-    <div className="relative h-[110px] w-[110px] overflow-hidden border-2 border-cream">
+    <div className="relative h-[108px] w-[108px] overflow-hidden rounded-[3px] border-[1.5px] border-gold/40">
       {url && <img src={url} alt={label} className="h-full w-full object-cover" />}
-      <div className="absolute left-0 right-0 top-0 h-0.5 bg-gold" style={{ animation: `scan 1.4s ${delay} linear infinite`, boxShadow: '0 0 12px var(--gold)' }} />
-      <div className="absolute bottom-0 left-0 right-0 bg-cream py-0.5 text-center font-display text-[9px] font-extrabold uppercase tracking-[0.15em] text-ink">
+      <div className="absolute left-0 right-0 top-0 h-0.5 bg-gold" style={{ animation: `scan 1.4s ${delay} linear infinite`, boxShadow: '0 0 10px var(--gold)' }} />
+      <div className="absolute bottom-0 left-0 right-0 bg-[rgba(10,18,8,0.85)] py-0.5 text-center font-display text-[9px] font-extrabold uppercase tracking-[0.2em] text-gold">
         {label}
       </div>
     </div>

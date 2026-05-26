@@ -1,7 +1,3 @@
-// App-root toast host. Renders the latest message from store.toasts as a
-// fixed bottom pill (ink bg, gold border) matching snaphunt.html .toast.
-// Auto-dismisses each toast after ~2.2s.
-
 import { useEffect } from 'react';
 import { useStore } from '../../lib/store';
 
@@ -20,11 +16,11 @@ export function ToastHost() {
 
   if (!current) return null;
   const borderTone =
-    current.tone === 'error' ? 'border-blaze' : current.tone === 'success' ? 'border-gold' : 'border-gold';
+    current.tone === 'error' ? 'border-ember' : 'border-gold/40';
 
   return (
     <div
-      className={`pointer-events-none fixed bottom-[30px] left-1/2 z-[200] -translate-x-1/2 border-2 ${borderTone} bg-ink px-[18px] py-2.5 font-display text-[13px] font-bold uppercase tracking-[0.1em] text-cream shadow-brutal`}
+      className={`pointer-events-none fixed bottom-[30px] left-1/2 z-[200] -translate-x-1/2 rounded-[3px] border-[1.5px] ${borderTone} bg-[rgba(10,18,8,0.95)] px-[18px] py-2.5 font-display text-[12px] font-bold uppercase tracking-[0.1em] text-parchment backdrop-blur-md`}
       role="status"
       aria-live="polite"
       data-testid="toast"

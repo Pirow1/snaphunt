@@ -1,9 +1,3 @@
-// 6-slot uppercase code display + on-screen keypad. Matches snaphunt.html
-// .code-input-grid and .keypad exactly.
-//
-// The on-screen keypad replaces the native keyboard so the typing experience
-// matches the brutal-shadow / monospace aesthetic.
-
 type CodeInputProps = {
   value: string;
   onChange: (next: string) => void;
@@ -34,29 +28,31 @@ export function CodeInput({ value, onChange }: CodeInputProps) {
             <div
               key={i}
               className={[
-                'relative flex aspect-[0.85] items-center justify-center border-2 border-ink',
-                'font-mono text-[28px] font-bold uppercase',
-                filled ? 'bg-gold' : 'bg-cream',
+                'relative flex aspect-[0.85] items-center justify-center rounded-[3px] border-[1.5px]',
+                'font-mono text-[26px] font-bold uppercase',
+                filled
+                  ? 'border-gold bg-gold/20 text-gold'
+                  : 'border-gold/35 bg-forest-mid/50 text-parchment',
               ].join(' ')}
             >
               {ch}
               {isCursor && (
                 <span
                   aria-hidden="true"
-                  className="absolute h-1/2 w-[2px] animate-blink bg-ink"
+                  className="absolute h-1/2 w-[2px] animate-blink bg-gold"
                 />
               )}
             </div>
           );
         })}
       </div>
-      <div className="mt-auto grid grid-cols-3 gap-2 border-2 border-ink bg-cream-2 p-3.5">
+      <div className="mt-auto grid grid-cols-3 gap-2 rounded-[4px] border border-gold/[0.18] bg-forest-mid/50 p-3.5">
         {KEYS.map((k) => (
           <button
             key={k}
             type="button"
             onClick={() => press(k)}
-            className="flex aspect-[1.5] items-center justify-center border-2 border-ink bg-cream font-mono text-[22px] font-bold transition-[transform,box-shadow,background] duration-[80ms] active:translate-x-[1px] active:translate-y-[1px] active:bg-gold active:shadow-[1px_1px_0_var(--ink)]"
+            className="flex aspect-[1.5] items-center justify-center rounded-[3px] border border-gold/25 bg-[rgba(10,18,8,0.6)] font-mono text-[20px] font-bold text-parchment transition-[background] duration-[80ms] active:bg-gold/20 active:text-gold"
             aria-label={k === 'DEL' ? 'Backspace' : `Key ${k}`}
           >
             {k === 'DEL' ? '⌫' : k}

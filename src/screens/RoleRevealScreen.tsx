@@ -1,8 +1,3 @@
-// Matches snaphunt.html #screen-role — full-screen ink background, centred
-// role card, 3px-bordered "★ ASSIGNMENT ★" stamp with scale-from-3x animation,
-// huge wdth-70 role title (blaze HIDER / gold SEEKER), italic Fraunces blurb,
-// gold "Accept Mission" CTA.
-
 import { useViewTransition } from '../hooks/useViewTransition';
 import { Button } from '../components/ui/Button';
 
@@ -19,19 +14,18 @@ const COPY = {
 
 export default function RoleRevealScreen({ role, hiderName, onAccept }: RoleRevealProps) {
   const go = useViewTransition();
-
-  // The View Transition has nothing to do with React Router on this screen
-  // (we don't change routes); the stamp animation runs on mount via the
-  // `animate-stamp-in` utility. We expose go() only for the "Back" affordance.
   void go;
 
-  const titleColor = role === 'hider' ? 'text-blaze' : 'text-gold';
+  const titleColor = role === 'hider' ? 'text-ember' : 'text-gold';
 
   return (
-    <main className="flex h-full w-full flex-col items-center justify-center bg-ink px-6 text-cream">
-      <div className="w-[88%] max-w-[340px] text-center">
+    <main className="flex h-full w-full flex-col items-center justify-center bg-forest-dark px-6 text-parchment">
+      {/* Subtle radial glow */}
+      <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse at center, rgba(200,168,75,0.08) 0%, transparent 70%)' }} aria-hidden="true" />
+
+      <div className="relative w-[88%] max-w-[340px] text-center">
         <div
-          className="mb-7 inline-block animate-stamp-in border-[3px] border-cream px-[18px] py-2 font-display text-[13px] font-extrabold uppercase tracking-[0.2em]"
+          className="mb-7 inline-block animate-stamp-in rounded-[2px] border-2 border-gold px-[18px] py-2 font-display text-[12px] font-extrabold uppercase tracking-[0.2em] text-gold"
           style={{ viewTransitionName: 'role-stamp' }}
           data-testid="role-stamp"
         >
@@ -39,18 +33,19 @@ export default function RoleRevealScreen({ role, hiderName, onAccept }: RoleReve
         </div>
 
         <h1
-          className={`mb-3 font-display text-[clamp(80px,22vw,110px)] font-extrabold uppercase leading-[0.8] tracking-[-0.06em] font-squeeze ${titleColor}`}
+          className={`mb-3 font-display font-extrabold uppercase leading-[0.8] tracking-[-0.06em] font-squeeze ${titleColor}`}
+          style={{ fontSize: 'clamp(80px, 22vw, 110px)' }}
           data-testid="role-title"
         >
           {role}
         </h1>
 
-        <p className="mx-auto mb-7 mt-4 max-w-[28ch] font-serif text-[19px] italic leading-snug text-cream-3">
+        <p className="mx-auto mb-7 mt-4 max-w-[28ch] font-serif text-[18px] italic leading-snug text-parchment/70">
           {COPY[role]}
         </p>
 
         {role === 'seeker' && hiderName && (
-          <p className="mb-7 font-mono text-[11px] uppercase tracking-[0.25em] text-cream-3/60">
+          <p className="mb-7 font-mono text-[11px] uppercase tracking-[0.25em] text-parchment/60">
             Hider this round · <span className="text-gold">{hiderName}</span>
           </p>
         )}
