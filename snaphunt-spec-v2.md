@@ -331,7 +331,7 @@ create table sessions (
   current_round_id uuid,
   settings jsonb not null default '{
     "rounds_total": 5,
-    "round_duration_seconds": 600,
+    "round_duration_seconds": 1200,
     "location_tolerance_meters": 30,
     "local_match_threshold": 0.85,
     "local_reject_threshold": 0.55,

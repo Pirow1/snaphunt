@@ -43,8 +43,10 @@ export default function JoinScreen() {
     setSubmitting(true);
     setError(null);
     try {
-      const { sessionId } = await joinSession({ code, name: trimmedName, emoji });
-      go(`/lobby/${sessionId}`);
+      const { sessionId, status } = await joinSession({ code, name: trimmedName, emoji });
+      // Late-joiners (hunt already in progress) skip the lobby and land
+      // directly in the game; the hider may still be setting their target.
+      go(status === 'playing' ? `/game/${sessionId}` : `/lobby/${sessionId}`);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Could not join the hunt.';
       setError(msg);

@@ -5,7 +5,7 @@ import { compressedPhoto } from './camera';
 import { encodeImage } from './vision';
 import { cosine, deserializeEmbedding, serializeEmbedding } from './embeddings';
 import { getCurrentCoords, haversine } from './geolocation';
-import { DEFAULT_SESSION_SETTINGS, type Difficulty, type Player, type Round, type Session, type Submission } from './types';
+import { DEFAULT_SESSION_SETTINGS, type Difficulty, type Player, type Round, type Session, type SessionStatus, type Submission } from './types';
 
 const POINTS_BY_DIFFICULTY: Record<Difficulty, number> = {
   easy: 50,
@@ -47,7 +47,7 @@ export type AppState = {
   setSession: (s: Session | null) => void;
   setPlayers: (p: Player[]) => void;
   createSession: (args: { name: string; emoji: string }) => Promise<{ sessionId: string; code: string }>;
-  joinSession: (args: { code: string; name: string; emoji: string }) => Promise<{ sessionId: string }>;
+  joinSession: (args: { code: string; name: string; emoji: string }) => Promise<{ sessionId: string; status: SessionStatus }>;
   startGame: () => Promise<{ roundId: string; hiderId: string }>;
   startNextRound: () => Promise<{ roundId: string; hiderId: string } | null>;
   finishSession: () => Promise<void>;
@@ -198,7 +198,7 @@ export const useStore = create<AppState>()((set) => ({
       // Map known sqlstates to friendly messages.
       switch (error.code) {
         case 'P0002': throw new Error('That code doesn’t match an active hunt.');
-        case 'P0003': throw new Error('That hunt has already started.');
+        case 'P0003': throw new Error('That hunt has already finished.');
         default: throw error;
       }
     }
@@ -207,7 +207,7 @@ export const useStore = create<AppState>()((set) => ({
       identity: { ...s.identity, name: trimmedName, emoji },
       session,
     }));
-    return { sessionId: session.id };
+    return { sessionId: session.id, status: session.status };
   },
 
   startGame: async () => {
@@ -336,7 +336,7 @@ export const useStore = create<AppState>()((set) => ({
     if (upErr) throw new Error(`upload failed: ${upErr.message}`);
 
     // 4) Update the round row atomically.
-    const durationSec = session.settings.round_duration_seconds ?? 600;
+    const durationSec = session.settings.round_duration_seconds ?? 1200;
     const startedAt = new Date();
     const expiresAt = new Date(startedAt.getTime() + durationSec * 1000);
 
