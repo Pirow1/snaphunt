@@ -118,11 +118,16 @@ const playRound = async (roundNumber, isLast) => {
   await seeker.setInputFiles('[data-testid="photo-input"]', { name: 'mine.jpg', mimeType: 'image/jpeg', buffer: trapBuf });
   await seeker.waitForSelector('[data-testid="result"]', { timeout: 20_000 });
 
-  // After the last round host waits 5s and calls finishSession.
-  // After non-last rounds, host calls startNextRound. Wait for either.
+  // After the last round host waits 6s and calls finishSession; everyone
+  // navigates to /game/<id>/winner (Phase 3.5). After non-last rounds the
+  // host calls startNextRound — between rounds everyone sees the new
+  // RoundResultScreen for ~6s.
   if (isLast) {
-    await Promise.all(pages.map((p) => p.waitForURL(new RegExp(`/gallery/${sessionId}$`), { timeout: 25_000 })));
+    await Promise.all(pages.map((p) => p.waitForURL(new RegExp(`/game/${sessionId}/winner$`), { timeout: 25_000 })));
   } else {
+    // Verify the new RoundResultScreen renders for everyone before the
+    // round flips to the next round_number.
+    await Promise.all(pages.map((p) => p.waitForSelector('[data-testid="round-result"]', { timeout: 15_000 })));
     const targetRoundNumber = roundNumber + 1;
     await A.waitForFunction(
       (target) => {
@@ -139,7 +144,17 @@ for (let r = 1; r <= ROUNDS_TOTAL; r++) {
   await playRound(r, r === ROUNDS_TOTAL);
 }
 
-console.log('\nAll clients on /gallery — inspecting…');
+console.log('\nAll clients on /game/<id>/winner — verifying champion card…');
+await Promise.all(pages.map((p) => p.waitForSelector('[data-testid="winner-reveal"]', { timeout: 15_000 })));
+const championEntries = await A.locator('[data-testid="winner-entry"]').count();
+console.log(`winner entries on A: ${championEntries}`);
+await A.screenshot({ path: '_smoke/out/p35-winner-A.png', fullPage: true });
+
+console.log('Tapping See Recap on every page to reach the gallery…');
+await Promise.all(pages.map((p) => p.getByTestId('winner-see-recap').click()));
+await Promise.all(pages.map((p) => p.waitForURL(new RegExp(`/gallery/${sessionId}$`), { timeout: 15_000 })));
+
+console.log('All clients on /gallery — inspecting…');
 await A.waitForSelector('[data-testid="gallery"]', { timeout: 10_000 });
 // Recap fetch is async — wait for at least one card to mount.
 await A.waitForSelector('[data-testid="recap-card"]', { timeout: 15_000 });
@@ -164,12 +179,29 @@ const bClearedSession = await B.evaluate(() => {
 });
 console.log('[B] back to /, store cleared:', bClearedSession);
 
+// Phase 3.5: scores should reflect the new multiplier (each round seeker
+// wins in <1s → speed ≈ 1.0, no assists → awarded ≈ 50). Verify at least
+// one match-winner row has a non-zero score (formula returned >0, RPC
+// fired, points_awarded persisted).
+const topScore = await A.evaluate(() => {
+  const rows = document.querySelectorAll('[data-testid="scoreboard-row"]');
+  let max = 0;
+  for (const r of rows) {
+    const m = r.textContent.match(/(\d+)\s*pts/);
+    if (m) max = Math.max(max, Number(m[1]));
+  }
+  return max;
+});
+console.log(`top score on scoreboard: ${topScore} (expected > 0 if multiplier RPC fired)`);
+
 const verdict =
   recapCount === ROUNDS_TOTAL &&
   stamps.every((s) => /MATCH|LEGENDARY/i.test(s)) &&
   sources.every((s) => /LOCAL|CLAUDE/i.test(s)) &&
   scoreRows === 3 &&
   goldRow === 1 &&
+  championEntries >= 1 &&
+  topScore > 0 &&
   bClearedSession;
 
 console.log('\nVERDICT:', verdict ? 'PASS' : 'FAIL');

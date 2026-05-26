@@ -10,6 +10,7 @@ import LobbyScreen from './screens/LobbyScreen';
 import GameRouter from './screens/GameRouter';
 import VerifyingScreen from './screens/VerifyingScreen';
 import ResultScreen from './screens/ResultScreen';
+import WinnerRevealScreen from './screens/WinnerRevealScreen';
 import GalleryScreen from './screens/GalleryScreen';
 import VisionTestScreen from './screens/VisionTestScreen';
 import CompassTestScreen from './screens/CompassTestScreen';
@@ -80,6 +81,7 @@ export default function App() {
         <Route path="/game/:sessionId" element={<GameRouter />} />
         <Route path="/game/:sessionId/verify" element={<VerifyingScreen />} />
         <Route path="/game/:sessionId/result" element={<ResultScreen />} />
+        <Route path="/game/:sessionId/winner" element={<WinnerRevealScreen />} />
         <Route path="/gallery/:sessionId" element={<GalleryScreen />} />
         {import.meta.env.DEV && <Route path="/vision-test" element={<VisionTestScreen />} />}
         {import.meta.env.DEV && <Route path="/compass-test" element={<CompassTestScreen />} />}

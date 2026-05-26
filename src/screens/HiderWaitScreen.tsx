@@ -10,6 +10,7 @@ import { useStore } from '../lib/store';
 import { supabase } from '../lib/supabase';
 import { TopBar, TopBarBadge } from '../components/ui/TopBar';
 import { useCountdown } from '../hooks/useCountdown';
+import { MiniLeaderboard } from '../components/game/MiniLeaderboard';
 import type { Player } from '../lib/types';
 
 type PresenceMeta = {
@@ -110,6 +111,10 @@ export default function HiderWaitScreen() {
   return (
     <main className="flex h-full w-full flex-col bg-cream text-ink" data-testid="hider-wait">
       <TopBar title="Trap Active" right={<TopBarBadge tone="dark">Hider</TopBarBadge>} />
+
+      <div className="px-[22px] pt-2.5">
+        <MiniLeaderboard />
+      </div>
 
       <div className="px-[22px] py-3 text-center">
         <span

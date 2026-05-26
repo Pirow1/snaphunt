@@ -85,6 +85,11 @@ export type Submission = {
   status: SubmissionStatus;
   created_at: string;
   verified_at: string | null;
+  // Phase 3.5 — scoring breakdown. Set by the client at INSERT time (assists)
+  // and by the win-claim RPC (points_awarded) after a successful match.
+  hint_used: boolean;
+  sharpen_level: number;
+  points_awarded: number | null;
 };
 
 // Minimal `Database` type for Supabase generic client typing.

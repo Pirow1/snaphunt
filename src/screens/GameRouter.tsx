@@ -22,8 +22,14 @@ import HiderWaitScreen from './HiderWaitScreen';
 import SeekerHuntScreen from './SeekerHuntScreen';
 import VerifyingScreen from './VerifyingScreen';
 import ResultScreen from './ResultScreen';
+import RoundResultScreen from './RoundResultScreen';
 
-const ROUND_END_PAUSE_MS = 5_000;
+const ROUND_END_PAUSE_MS = 8_000;
+// Grace window after round.status flips to 'finished' before swapping to
+// RoundResultScreen. Lets the winning seeker actually SEE their personal
+// "A Match!" verdict (with arpeggio + haptic) for a beat before the
+// unified between-rounds reveal takes over.
+const ROUND_RESULT_DELAY_MS = 2_000;
 
 export default function GameRouter() {
   const { sessionId = null } = useParams<{ sessionId: string }>();
@@ -38,10 +44,12 @@ export default function GameRouter() {
   const clearSubmissions = useStore((s) => s.clearSubmissions);
   const startNextRound = useStore((s) => s.startNextRound);
   const finishSession = useStore((s) => s.finishSession);
+  const resetAssists = useStore((s) => s.resetAssists);
 
   const [accepted, setAccepted] = useState(false);
   const submissionId = useStore((s) => s.currentSubmissionId);
   const [submission, setSubmission] = useState<Submission | null>(null);
+  const [showRoundResult, setShowRoundResult] = useState(false);
 
   // New round arrived (host inserted one + sessions.current_round_id flipped).
   // Reset per-round local state so RoleReveal runs again for everyone.
@@ -53,9 +61,21 @@ export default function GameRouter() {
       setSubmission(null);
       setCurrentSubmissionId(null);
       clearSubmissions();
+      resetAssists();
+      setShowRoundResult(false);
     }
     lastRoundId.current = round.id;
-  }, [round?.id, setCurrentSubmissionId, clearSubmissions]);
+  }, [round?.id, setCurrentSubmissionId, clearSubmissions, resetAssists]);
+
+  // After round.status flips to 'finished', wait ROUND_RESULT_DELAY_MS before
+  // swapping every client over to RoundResultScreen — gives the winning
+  // seeker time to see their personal "A Match!" ResultScreen (with audio
+  // + haptic) before the unified reveal takes over.
+  useEffect(() => {
+    if (round?.status !== 'finished') { setShowRoundResult(false); return; }
+    const t = window.setTimeout(() => setShowRoundResult(true), ROUND_RESULT_DELAY_MS);
+    return () => window.clearTimeout(t);
+  }, [round?.status, round?.id]);
 
   // Poll the seeker's own submission for status changes.
   useEffect(() => {
@@ -97,12 +117,17 @@ export default function GameRouter() {
       }
     }, ROUND_END_PAUSE_MS);
     return () => window.clearTimeout(t);
-  }, [round?.id, round?.status, round?.round_number, session?.settings.rounds_total, isHost, startNextRound, finishSession, session]);
+    // NOTE: `session` itself is intentionally NOT in deps — its reference
+    // changes on every realtime broadcast, which would cancel the 8s timer
+    // mid-flight and the ref guard would then block re-scheduling. We
+    // depend on the scalar fields we actually read (rounds_total, host).
+  }, [round?.id, round?.status, round?.round_number, session?.settings.rounds_total, isHost, startNextRound, finishSession]);
 
-  // Everyone: when session flips to 'finished', go to gallery.
+  // Everyone: when session flips to 'finished', go to the winner-reveal
+  // screen (which then routes onward to the gallery on user tap).
   useEffect(() => {
     if (session?.status === 'finished' && sessionId) {
-      navigate(`/gallery/${sessionId}`);
+      navigate(`/game/${sessionId}/winner`);
     }
   }, [session?.status, sessionId, navigate]);
 
@@ -135,8 +160,15 @@ export default function GameRouter() {
     );
   }
 
-  // Hider: capture pre-trap; wait while active; "round over" until host
-  // advances (handled inside HiderWaitScreen via round.status check).
+  // Round is over for everyone — show the unified reveal (Phase 3.5) after
+  // the grace window. During the grace window every client stays on their
+  // existing screen so the winning seeker's personal "A Match!" verdict
+  // gets visible airtime.
+  if (round.status === 'finished' && showRoundResult) {
+    return <RoundResultScreen />;
+  }
+
+  // Hider: capture pre-trap; wait while active.
   if (isHider) {
     return round.status === 'pending' ? <HiderCaptureScreen /> : <HiderWaitScreen />;
   }

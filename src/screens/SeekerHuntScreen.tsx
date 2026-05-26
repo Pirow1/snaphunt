@@ -14,6 +14,7 @@ import { TopBar, TopBarBadge } from '../components/ui/TopBar';
 import { TargetCard } from '../components/game/TargetCard';
 import { Radar } from '../components/game/Radar';
 import { PhotoCapture } from '../components/game/PhotoCapture';
+import { MiniLeaderboard } from '../components/game/MiniLeaderboard';
 
 export default function SeekerHuntScreen() {
   const round = useStore((s) => s.currentRound);
@@ -24,8 +25,10 @@ export default function SeekerHuntScreen() {
   const { heading, requestPerm } = useCompass();
 
   const submitGuess = useStore((s) => s.submitGuess);
-  const [sharpenLevel, setSharpenLevel] = useState<0 | 1 | 2 | 3>(0);
-  const [hintRevealed, setHintRevealed] = useState(false);
+  const sharpenLevel = useStore((s) => s.sharpenLevel);
+  const setSharpenLevel = useStore((s) => s.setSharpenLevel);
+  const hintRevealed = useStore((s) => s.hintUsed);
+  const setHintRevealed = useStore((s) => s.setHintUsed);
   const [compassNeedsPerm, setCompassNeedsPerm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -88,6 +91,7 @@ export default function SeekerHuntScreen() {
       />
 
       <div className="flex flex-1 flex-col gap-3.5 px-[22px] pt-3 pb-[22px]">
+        <MiniLeaderboard />
         <TargetCard
           photoPath={round.photo_path}
           hint={round.hint}
@@ -140,7 +144,7 @@ export default function SeekerHuntScreen() {
           <button
             type="button"
             disabled={!canSharpen}
-            onClick={() => setSharpenLevel((l) => (Math.min(3, l + 1)) as 0 | 1 | 2 | 3)}
+            onClick={() => setSharpenLevel(Math.min(3, sharpenLevel + 1) as 0 | 1 | 2 | 3)}
             className="flex flex-col items-center justify-center gap-1 border-2 border-ink bg-cream-2 px-2 py-2.5 font-display text-[11px] font-bold uppercase tracking-[0.1em] shadow-[3px_3px_0_var(--ink)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0_var(--ink)] disabled:cursor-not-allowed disabled:opacity-40"
             data-testid="sharpen"
           >

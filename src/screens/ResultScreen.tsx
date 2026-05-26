@@ -137,9 +137,15 @@ export default function ResultScreen() {
         )}
 
         <div className="mt-auto flex flex-col gap-2">
-          <Button variant="primary" onClick={() => { setCurrentSubmissionId(null); go('/'); }} data-testid="result-home">
-            Back to Home
-          </Button>
+          {isMatch ? (
+            <Button variant="primary" onClick={() => { setCurrentSubmissionId(null); go('/'); }} data-testid="result-home">
+              Back to Home
+            </Button>
+          ) : (
+            <Button variant="primary" onClick={() => setCurrentSubmissionId(null)} data-testid="result-keep-hunting">
+              Keep Hunting
+            </Button>
+          )}
         </div>
       </div>
     </main>

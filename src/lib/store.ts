@@ -63,6 +63,14 @@ export type AppState = {
   currentSubmissionId: string | null;
   setCurrentSubmissionId: (id: string | null) => void;
 
+  // Seeker assists for the current round. Reset on round.id change in
+  // GameRouter so each new round starts clean.
+  hintUsed: boolean;
+  sharpenLevel: 0 | 1 | 2 | 3;
+  setHintUsed: (used: boolean) => void;
+  setSharpenLevel: (level: 0 | 1 | 2 | 3) => void;
+  resetAssists: () => void;
+
   // current round
   currentRound: Round | null;
   setCurrentRound: (r: Round | null) => void;
@@ -397,6 +405,12 @@ export const useStore = create<AppState>()((set) => ({
   currentSubmissionId: null,
   setCurrentSubmissionId: (id) => set({ currentSubmissionId: id }),
 
+  hintUsed: false,
+  sharpenLevel: 0,
+  setHintUsed: (used) => set({ hintUsed: used }),
+  setSharpenLevel: (level) => set({ sharpenLevel: level }),
+  resetAssists: () => set({ hintUsed: false, sharpenLevel: 0 }),
+
   submitGuess: async ({ file }) => {
     const state = useStore.getState();
     const round = state.currentRound;
@@ -429,6 +443,8 @@ export const useStore = create<AppState>()((set) => ({
       seeker_lat: coords.lat,
       seeker_lng: coords.lng,
       distance_meters: distM,
+      hint_used: state.hintUsed,
+      sharpen_level: state.sharpenLevel,
     };
 
     const { error: insErr } = await supabase.from('submissions').insert(baseRow);
