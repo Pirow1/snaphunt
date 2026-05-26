@@ -70,7 +70,7 @@ export default function LobbyScreen() {
     <main className="flex h-full w-full flex-col bg-cream text-ink">
       <TopBar title="Hunt Lobby" back="/" right={<TopBarBadge tone={isHost ? 'gold' : 'dark'}>{isHost ? 'Host' : 'Guest'}</TopBarBadge>} />
 
-      <div className="flex flex-1 flex-col px-[22px] pt-5 pb-7">
+      <div className="flex flex-1 flex-col overflow-y-auto px-[22px] pt-5 pb-7">
         <div className="text-center">
           <div className="font-display text-[11px] font-bold uppercase tracking-[0.25em] text-ink-soft">
             Share this code

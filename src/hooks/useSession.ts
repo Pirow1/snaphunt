@@ -11,6 +11,8 @@ type BroadcastPayload = {
   old: Record<string, unknown> | null;
 };
 
+const POLL_FALLBACK_MS = 3_000;
+
 /**
  * Subscribes the store to a session's players / rounds / sessions via
  * Supabase Realtime *broadcast* (DB triggers push messages — see
@@ -18,6 +20,12 @@ type BroadcastPayload = {
  *
  * Channel is `session:<sessionId>` (private); RLS on realtime.messages
  * (0005) gates who may subscribe.
+ *
+ * A polling fallback runs every 3s alongside the broadcast subscribe so
+ * the UI catches up even when the WS handshake is stuck (production env
+ * sometimes drops the private-channel auth). Polling is idempotent — if
+ * realtime is working, nothing changes and re-renders are no-ops because
+ * the store setters store-shallow-equal.
  *
  * Pass `null` to tear down.
  */
@@ -33,6 +41,25 @@ export function useSession(sessionId: string | null): void {
 
     let cancelled = false;
     let channel: RealtimeChannel | null = null;
+    let pollTimer: number | null = null;
+
+    async function snapshot() {
+      if (cancelled || !sessionId) return;
+      const [{ data: sessionRow }, { data: playerRows }, { data: roundRows }] = await Promise.all([
+        supabase.from('sessions').select('*').eq('id', sessionId).maybeSingle(),
+        supabase.from('players').select('*').eq('session_id', sessionId).order('joined_at'),
+        supabase
+          .from('rounds')
+          .select('*')
+          .eq('session_id', sessionId)
+          .order('round_number', { ascending: false })
+          .limit(1),
+      ]);
+      if (cancelled) return;
+      if (sessionRow) setSession(sessionRow as Session);
+      setPlayers((playerRows ?? []) as Player[]);
+      setCurrentRound((roundRows?.[0] ?? null) as Round | null);
+    }
 
     (async () => {
       // Pin Realtime's auth to the current access_token so the realtime.messages
@@ -45,22 +72,8 @@ export function useSession(sessionId: string | null): void {
         supabase.realtime.setAuth(sess.session.access_token);
       }
 
-      // Initial fetch (broadcast only carries CDC; we still need a snapshot).
-      const [{ data: sessionRow }, { data: playerRows }, { data: roundRows }] = await Promise.all([
-        supabase.from('sessions').select('*').eq('id', sessionId).maybeSingle(),
-        supabase.from('players').select('*').eq('session_id', sessionId).order('joined_at'),
-        supabase
-          .from('rounds')
-          .select('*')
-          .eq('session_id', sessionId)
-          .order('round_number', { ascending: false })
-          .limit(1),
-      ]);
-
+      await snapshot();
       if (cancelled) return;
-      if (sessionRow) setSession(sessionRow as Session);
-      setPlayers((playerRows ?? []) as Player[]);
-      setCurrentRound((roundRows?.[0] ?? null) as Round | null);
 
       function applyPlayers(p: BroadcastPayload) {
         const state = useStore.getState();
@@ -104,22 +117,18 @@ export function useSession(sessionId: string | null): void {
           // SUBSCRIBED handshake was never delivered (Realtime doesn't queue).
           // Re-fetch once on subscribe to close the window.
           if (status === 'SUBSCRIBED' && !cancelled) {
-            const [{ data: sx }, { data: ps }, { data: rs }] = await Promise.all([
-              supabase.from('sessions').select('*').eq('id', sessionId).maybeSingle(),
-              supabase.from('players').select('*').eq('session_id', sessionId).order('joined_at'),
-              supabase.from('rounds').select('*').eq('session_id', sessionId).order('round_number', { ascending: false }).limit(1),
-            ]);
-            if (!cancelled) {
-              if (sx) setSession(sx as Session);
-              setPlayers((ps ?? []) as Player[]);
-              setCurrentRound((rs?.[0] ?? null) as Round | null);
-            }
+            await snapshot();
           }
         });
+
+      // Polling fallback. Fires every 3s regardless of WS status — covers the
+      // case where the realtime broadcast is dropping silently in production.
+      pollTimer = window.setInterval(() => { void snapshot(); }, POLL_FALLBACK_MS);
     })();
 
     return () => {
       cancelled = true;
+      if (pollTimer) window.clearInterval(pollTimer);
       if (channel) supabase.removeChannel(channel);
     };
   }, [sessionId, authUserId, setSession, setPlayers, setCurrentRound, upsertSubmission]);
