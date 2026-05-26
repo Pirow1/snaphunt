@@ -6,7 +6,11 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // `autoUpdate` reloads as soon as a new SW activates. On Vercel that can
+      // misfire repeatedly (per-edge hash drift in the precache manifest) and
+      // trap users in a reload loop. `prompt` only installs; we don't surface
+      // a "new version" UI so the user just keeps the existing SW.
+      registerType: 'prompt',
       includeAssets: ['icons/*'],
       manifest: {
         name: 'SnapHunt',

@@ -36,9 +36,12 @@ export function useSession(sessionId: string | null): void {
 
     (async () => {
       // Pin Realtime's auth to the current access_token so the realtime.messages
-      // policy's auth.uid() resolves to this user.
+      // policy's auth.uid() resolves to this user. setAuth() on an already-open
+      // socket doesn't always re-handshake the JWT, so we explicitly disconnect
+      // first — the next subscribe forces a reconnect with the new token.
       const { data: sess } = await supabase.auth.getSession();
       if (sess.session?.access_token) {
+        try { supabase.realtime.disconnect(); } catch { /* not yet connected */ }
         supabase.realtime.setAuth(sess.session.access_token);
       }
 
@@ -94,7 +97,9 @@ export function useSession(sessionId: string | null): void {
           upsertSubmission(p.new as Submission);
         })
         .subscribe(async (status, err) => {
-          if (import.meta.env.DEV) console.log('[rt/subscribe]', status, err?.message ?? '');
+          // Log in prod too — without this the only way to diagnose a stuck
+          // subscribe on a deployed device is the network ws frame inspector.
+          console.log('[rt/subscribe]', status, err?.message ?? '');
           // Race: any INSERT that landed between our initial fetch and the
           // SUBSCRIBED handshake was never delivered (Realtime doesn't queue).
           // Re-fetch once on subscribe to close the window.
