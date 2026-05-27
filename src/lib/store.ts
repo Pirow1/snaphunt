@@ -218,7 +218,7 @@ export const useStore = create<AppState>()((set) => ({
 
     if (!session || !userId) throw new Error('No active session.');
     if (session.host_id !== userId) throw new Error('Only the host can start the hunt.');
-    if (players.length < 3) throw new Error(`Need at least 3 players (have ${players.length}).`);
+    if (players.length < 2) throw new Error(`Need at least 2 players (have ${players.length}).`);
 
     // Random hider for round 1.
     const hider = players[Math.floor(Math.random() * players.length)]!;
