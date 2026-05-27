@@ -10,7 +10,7 @@ import { playJoin, vibrate } from '../lib/audio';
 import { ForestBg } from '../components/ui/ForestBg';
 
 const MAX_PLAYERS = 8;
-const MIN_TO_START = 3;
+const MIN_TO_START = 2;
 
 export default function LobbyScreen() {
   const { sessionId = null } = useParams<{ sessionId: string }>();
