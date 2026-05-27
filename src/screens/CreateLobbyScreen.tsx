@@ -67,7 +67,7 @@ export default function CreateLobbyScreen() {
             maxLength={24}
             autoComplete="off"
             spellCheck={false}
-            className="mt-3 w-full rounded-[3px] border-[1.5px] border-gold/25 bg-forest-mid/50 px-4 py-3 font-mono text-2xl tracking-widest text-parchment placeholder:text-parchment/48 focus:border-gold focus:bg-forest-mid/70 focus:outline-none"
+            className="mt-3 w-full rounded-[3px] border-[1.5px] border-gold/25 bg-forest-mid/50 px-4 py-3 font-mono text-2xl tracking-widest text-ink placeholder:text-ink/40 focus:border-gold focus:bg-forest-mid/70 focus:outline-none"
           />
           <div className="mt-1 text-right font-mono text-[10px] text-parchment/65">{trimmed.length}/24</div>
         </section>
