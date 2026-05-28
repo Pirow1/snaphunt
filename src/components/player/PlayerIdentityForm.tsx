@@ -190,7 +190,7 @@ export function PlayerIdentityForm({ variant, namePlaceholder, emojiOptions, onC
 
   const inputClass = isSnaphunt
     ? 'mt-2 w-full rounded-[3px] border-[1.5px] border-gold/25 bg-forest-mid/50 px-4 py-3 font-mono text-lg tracking-wide text-ink placeholder:text-ink/40 focus:border-gold focus:bg-forest-mid/70 focus:outline-none'
-    : 'mt-1 w-full rounded-[2px] border-2 border-rim bg-surface px-4 py-3 font-rb-mono text-[18px] tracking-widest text-ink placeholder:text-ash/50 focus:border-spark focus:outline-none';
+    : 'mt-1 w-full rounded-[2px] border-2 border-rim bg-surface px-4 py-3 font-rb-mono text-[18px] tracking-widest text-smoke placeholder:text-ash/50 focus:border-spark focus:outline-none';
 
   const sectionClass = 'flex flex-col gap-1';
 
