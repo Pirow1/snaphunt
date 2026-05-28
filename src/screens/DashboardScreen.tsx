@@ -1,11 +1,9 @@
 import { useViewTransition } from '../hooks/useViewTransition';
 
 const MAROON = '#800020';
-const MAROON_LIGHT = 'rgba(128,0,32,0.12)';
 
 export default function DashboardScreen() {
   const go = useViewTransition();
-  const rushBUrl = (import.meta.env.VITE_RUSH_B_URL ?? '') as string;
 
   return (
     <main className="relative flex h-full w-full flex-col overflow-y-auto overflow-x-hidden bg-white">
@@ -129,66 +127,37 @@ export default function DashboardScreen() {
         </button>
 
         {/* ── RUSH B ───────────────────────────────────────────── */}
-        {rushBUrl ? (
-          <a
-            href={rushBUrl}
-            className="group relative overflow-hidden text-left transition-transform active:scale-[0.98] block no-underline"
-            style={{ borderRadius: 4, border: `2px solid ${MAROON}` }}
-          >
-            <RushBCardInner />
-            <div className="relative px-5 pb-5 pt-6">
-              <div className="flex items-start justify-between gap-3">
-                <RushBText />
-                <div className="text-[36px] leading-none flex-shrink-0">💣</div>
-              </div>
-              {/* Rush B-style button */}
-              <div
-                className="mt-4 inline-block"
-                style={{
-                  background: '#FF2020',
-                  color: '#FFFFFF',
-                  fontFamily: '"Share Tech Mono", "JetBrains Mono", monospace',
-                  fontSize: 13,
-                  fontWeight: 700,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  padding: '8px 18px',
-                  borderRadius: 2,
-                }}
-              >
-                Play Rush B →
-              </div>
+        <button
+          type="button"
+          onClick={() => go('/rushb')}
+          className="group relative overflow-hidden text-left transition-transform active:scale-[0.98] w-full"
+          style={{ borderRadius: 4, border: `2px solid ${MAROON}` }}
+        >
+          <RushBCardInner />
+          <div className="relative px-5 pb-5 pt-6">
+            <div className="flex items-start justify-between gap-3">
+              <RushBText />
+              <div className="text-[36px] leading-none flex-shrink-0">💣</div>
             </div>
-          </a>
-        ) : (
-          <div
-            className="relative overflow-hidden text-left"
-            style={{ borderRadius: 4, border: `2px solid ${MAROON}`, opacity: 0.6 }}
-          >
-            <RushBCardInner />
-            <div className="relative px-5 pb-5 pt-6">
-              <div className="flex items-start justify-between gap-3">
-                <RushBText />
-                <div className="text-[36px] leading-none flex-shrink-0">💣</div>
-              </div>
-              <div
-                className="mt-4 inline-block"
-                style={{
-                  background: '#2A2A2A',
-                  color: '#555555',
-                  fontFamily: '"Share Tech Mono", "JetBrains Mono", monospace',
-                  fontSize: 13,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  padding: '8px 18px',
-                  borderRadius: 2,
-                }}
-              >
-                Coming Soon
-              </div>
+            {/* Rush B-style button */}
+            <div
+              className="mt-4 inline-block"
+              style={{
+                background: '#FF2020',
+                color: '#FFFFFF',
+                fontFamily: '"Share Tech Mono", "JetBrains Mono", monospace',
+                fontSize: 13,
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                padding: '8px 18px',
+                borderRadius: 2,
+              }}
+            >
+              Play Rush B →
             </div>
           </div>
-        )}
+        </button>
       </div>
 
       {/* Footer */}

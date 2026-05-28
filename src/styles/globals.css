@@ -30,6 +30,21 @@
   --forest-light:  #2D5240;
   --azure:         #2E5BC4;
   --plum:          #5C2A4A;
+
+  /* === RUSH B PALETTE === */
+  --void:        #0A0A0D;
+  --carbon:      #0F0F15;
+  --surface:     #17171F;
+  --rim:         #24242E;
+  --threat:      #FF2020;
+  --threat-deep: #CC0000;
+  --spark:       #FFE000;
+  --spark-dim:   #998700;
+  --clear:       #00CC44;
+  --clear-dim:   #007A29;
+  --smoke:       #C8C8D8;
+  --ash:         #555565;
+  --chalk:       #FFFFFF;
 }
 
 * {
@@ -96,4 +111,42 @@ body {
 }
 .font-wonk {
   font-variation-settings: 'WONK' 1;
+}
+
+/* ── Rush B utilities ─────────────────────────────────────── */
+
+/* Warning hazard tape */
+.warning-stripe {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--spark) 0px,
+    var(--spark) 8px,
+    #000 8px,
+    #000 16px
+  );
+}
+
+@keyframes screen-flash-warning {
+  0%, 100% { opacity: 0; }
+  50%       { opacity: 1; }
+}
+
+@keyframes screen-flash-critical {
+  0%, 100% { opacity: 0; }
+  40%, 60% { opacity: 1; }
+}
+
+@keyframes screen-flash-extreme {
+  0%, 100% { opacity: 0; }
+  30%, 70% { opacity: 1; }
+}
+
+@keyframes edge-glow-pulse {
+  0%, 100% { opacity: 0.25; }
+  50%       { opacity: 0.70; }
+}
+
+@keyframes warning-stripe-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
 }
