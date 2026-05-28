@@ -47,6 +47,7 @@ export type Player = {
   is_host: boolean;
   joined_at: string;
   last_seen_at: string;
+  user_profile_id: string | null;
 };
 
 export type Round = {
@@ -85,21 +86,33 @@ export type Submission = {
   verified_at: string | null;
 };
 
+export type UserProfile = {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  photo_url: string | null;
+  emoji: string;
+  created_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
-      sessions:    { Row: Session;    Insert: Partial<Session>    & Pick<Session,    'code' | 'host_id'>; Update: Partial<Session>;    Relationships: [] };
-      players:     { Row: Player;     Insert: Partial<Player>     & Pick<Player,     'id' | 'session_id' | 'name'>; Update: Partial<Player>;     Relationships: [] };
-      rounds:      { Row: Round;      Insert: Partial<Round>      & Pick<Round,      'session_id' | 'round_number' | 'planter_id'>; Update: Partial<Round>;      Relationships: [] };
-      submissions: { Row: Submission; Insert: Partial<Submission> & Pick<Submission, 'round_id' | 'defuser_id' | 'defuser_lat' | 'defuser_lng'>; Update: Partial<Submission>; Relationships: [] };
+      rb_sessions:    { Row: Session;    Insert: Partial<Session>    & Pick<Session,    'code' | 'host_id'>; Update: Partial<Session>;    Relationships: [] };
+      rb_players:     { Row: Player;     Insert: Partial<Player>     & Pick<Player,     'id' | 'session_id' | 'name'>; Update: Partial<Player>;     Relationships: [] };
+      rb_rounds:      { Row: Round;      Insert: Partial<Round>      & Pick<Round,      'session_id' | 'round_number' | 'planter_id'>; Update: Partial<Round>;      Relationships: [] };
+      rb_submissions: { Row: Submission; Insert: Partial<Submission> & Pick<Submission, 'round_id' | 'defuser_id' | 'defuser_lat' | 'defuser_lng'>; Update: Partial<Submission>; Relationships: [] };
+      user_profiles:  { Row: UserProfile; Insert: Partial<UserProfile> & Pick<UserProfile, 'name'>; Update: Partial<UserProfile>; Relationships: [] };
     };
     Views: Record<string, never>;
     Functions: {
-      rb_create_session_with_host: { Args: { p_session_id: string; p_code: string; p_name: string; p_emoji: string }; Returns: Session };
-      rb_join_session_by_code:     { Args: { p_code: string; p_name: string; p_emoji: string }; Returns: Session };
+      rb_create_session_with_host: { Args: { p_session_id: string; p_code: string; p_name: string; p_emoji: string; p_user_profile_id?: string | null }; Returns: Session };
+      rb_join_session_by_code:     { Args: { p_code: string; p_name: string; p_emoji: string; p_user_profile_id?: string | null }; Returns: Session };
       rb_start_next_round:         { Args: { p_session_id: string; p_planter_id: string; p_round_number: number }; Returns: Round };
       rb_expire_round_no_winner:   { Args: { p_round_id: string }; Returns: Round };
       rb_claim_round_defused:      { Args: { p_round_id: string }; Returns: Round };
+      find_user_by_contact:        { Args: { p_email?: string | null; p_phone?: string | null }; Returns: UserProfile[] };
     };
   };
 };

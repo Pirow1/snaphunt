@@ -25,6 +25,8 @@ export type Identity = {
   authUserId: string | null;
   name: string;
   emoji: string;
+  userProfileId: string | null;
+  photoUrl: string | null;
 };
 
 export type GeoCoords = { lat: number; lng: number; accuracy?: number };
@@ -40,14 +42,15 @@ export type AppState = {
   identity: Identity;
   setAuthUserId: (id: string | null) => void;
   setIdentity: (patch: Partial<Identity>) => void;
+  setUserProfile: (profileId: string, photoUrl: string | null) => void;
 
   // session
   session: Session | null;
   players: Player[];
   setSession: (s: Session | null) => void;
   setPlayers: (p: Player[]) => void;
-  createSession: (args: { name: string; emoji: string }) => Promise<{ sessionId: string; code: string }>;
-  joinSession: (args: { code: string; name: string; emoji: string }) => Promise<{ sessionId: string; status: SessionStatus }>;
+  createSession: (args: { name: string; emoji: string; userProfileId?: string | null }) => Promise<{ sessionId: string; code: string }>;
+  joinSession: (args: { code: string; name: string; emoji: string; userProfileId?: string | null }) => Promise<{ sessionId: string; status: SessionStatus }>;
   startGame: () => Promise<{ roundId: string; hiderId: string }>;
   startNextRound: () => Promise<{ roundId: string; hiderId: string } | null>;
   finishSession: () => Promise<void>;
@@ -107,18 +110,20 @@ export type AppState = {
 let toastSeq = 0;
 
 export const useStore = create<AppState>()((set) => ({
-  identity: { authUserId: null, name: '', emoji: '🦊' },
+  identity: { authUserId: null, name: '', emoji: '🦊', userProfileId: null, photoUrl: null },
   setAuthUserId: (id) =>
     set((s) => ({ identity: { ...s.identity, authUserId: id } })),
   setIdentity: (patch) =>
     set((s) => ({ identity: { ...s.identity, ...patch } })),
+  setUserProfile: (profileId, photoUrl) =>
+    set((s) => ({ identity: { ...s.identity, userProfileId: profileId, photoUrl } })),
 
   session: null,
   players: [],
   setSession: (session) => set({ session }),
   setPlayers: (players) => set({ players }),
 
-  createSession: async ({ name, emoji }) => {
+  createSession: async ({ name, emoji, userProfileId }) => {
     const userId = useStore.getState().identity.authUserId;
     if (!userId) throw new Error('Not authenticated yet — wait for anon sign-in to finish.');
 
@@ -141,6 +146,7 @@ export const useStore = create<AppState>()((set) => ({
         p_code: code,
         p_name: trimmedName,
         p_emoji: emoji,
+        p_user_profile_id: userProfileId ?? null,
       });
       if (!error) { lastErr = null; break; }
       lastErr = error;
@@ -180,7 +186,7 @@ export const useStore = create<AppState>()((set) => ({
     return { sessionId, code };
   },
 
-  joinSession: async ({ code, name, emoji }) => {
+  joinSession: async ({ code, name, emoji, userProfileId }) => {
     const userId = useStore.getState().identity.authUserId;
     if (!userId) throw new Error('Not authenticated yet — wait for anon sign-in to finish.');
 
@@ -193,6 +199,7 @@ export const useStore = create<AppState>()((set) => ({
       p_code: code,
       p_name: trimmedName,
       p_emoji: emoji,
+      p_user_profile_id: userProfileId ?? null,
     });
     if (error) {
       // Map known sqlstates to friendly messages.

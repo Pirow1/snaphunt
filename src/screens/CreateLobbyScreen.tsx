@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useViewTransition } from '../hooks/useViewTransition';
 import { useStore } from '../lib/store';
-import { Button } from '../components/ui/Button';
 import { ForestBg } from '../components/ui/ForestBg';
+import { PlayerIdentityForm } from '../components/player/PlayerIdentityForm';
 
 const EMOJI_PICKS = ['🦊', '🦌', '🦅', '🐝', '🐢', '🦉'] as const;
 
@@ -10,21 +10,27 @@ export default function CreateLobbyScreen() {
   const go = useViewTransition();
   const authUserId = useStore((s) => s.identity.authUserId);
   const createSession = useStore((s) => s.createSession);
+  const setUserProfile = useStore((s) => s.setUserProfile);
 
-  const [name, setName] = useState('');
-  const [emoji, setEmoji] = useState<string>(EMOJI_PICKS[0]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const trimmed = name.trim();
-  const canSubmit = trimmed.length >= 1 && trimmed.length <= 24 && !!authUserId && !submitting;
-
-  async function handleSubmit() {
-    if (!canSubmit) return;
+  async function handleIdentity(identity: {
+    name: string;
+    emoji: string;
+    photoUrl: string | null;
+    userProfileId: string;
+  }) {
+    if (!authUserId) return;
     setSubmitting(true);
     setError(null);
     try {
-      const { sessionId } = await createSession({ name: trimmed, emoji });
+      setUserProfile(identity.userProfileId, identity.photoUrl);
+      const { sessionId } = await createSession({
+        name: identity.name,
+        emoji: identity.emoji,
+        userProfileId: identity.userProfileId,
+      });
       go(`/lobby/${sessionId}`);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Could not create the hunt.';
@@ -53,72 +59,26 @@ export default function CreateLobbyScreen() {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-8 px-[22px] py-7">
-        <section>
-          <label htmlFor="hunter-name" className="block font-display text-[11px] font-bold uppercase tracking-[0.25em] text-parchment/75">
-            Your hunter name
-          </label>
-          <input
-            id="hunter-name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value.slice(0, 24))}
-            placeholder="e.g. Sam"
-            maxLength={24}
-            autoComplete="off"
-            spellCheck={false}
-            className="mt-3 w-full rounded-[3px] border-[1.5px] border-gold/25 bg-forest-mid/50 px-4 py-3 font-mono text-2xl tracking-widest text-ink placeholder:text-ink/40 focus:border-gold focus:bg-forest-mid/70 focus:outline-none"
-          />
-          <div className="mt-1 text-right font-mono text-[10px] text-parchment/65">{trimmed.length}/24</div>
-        </section>
-
-        <section>
-          <span className="block font-display text-[11px] font-bold uppercase tracking-[0.25em] text-parchment/75">
-            Pick a sigil
-          </span>
-          <div className="mt-3 grid grid-cols-6 gap-2">
-            {EMOJI_PICKS.map((e) => {
-              const selected = e === emoji;
-              return (
-                <button
-                  key={e}
-                  type="button"
-                  onClick={() => setEmoji(e)}
-                  aria-pressed={selected}
-                  className={[
-                    'flex aspect-square items-center justify-center rounded-[3px] border-[1.5px] text-3xl transition-transform',
-                    selected
-                      ? 'border-gold bg-gold/20 scale-100'
-                      : 'border-gold/25 bg-forest-mid/50 active:scale-95',
-                  ].join(' ')}
-                >
-                  {e}
-                </button>
-              );
-            })}
-          </div>
-        </section>
+      <div className="flex flex-1 flex-col overflow-y-auto px-[22px] py-7">
+        <PlayerIdentityForm
+          variant="snaphunt"
+          namePlaceholder="Hunter name"
+          emojiOptions={EMOJI_PICKS}
+          onComplete={handleIdentity}
+          disabled={submitting || !authUserId}
+        />
 
         {error && (
-          <div className="rounded-[3px] border border-ember/50 bg-ember/20 px-3 py-2 font-display text-sm font-bold text-parchment">
+          <div className="mt-4 rounded-[3px] border border-ember/50 bg-ember/20 px-3 py-2 font-display text-sm font-bold text-parchment">
             {error}
           </div>
         )}
 
-        <div className="mt-auto">
-          <Button
-            variant="primary"
-            disabled={!canSubmit}
-            onClick={handleSubmit}
-          >
-            {submitting ? '…Conjuring…' : '▶ Set the Trap'}
-          </Button>
-          {!authUserId && (
-            <p className="mt-3 text-center font-mono text-[10px] text-parchment/65">
-              Waiting for anonymous sign-in…
-            </p>
-          )}
-        </div>
+        {!authUserId && (
+          <p className="mt-3 text-center font-mono text-[10px] text-parchment/65">
+            Waiting for anonymous sign-in…
+          </p>
+        )}
       </div>
     </main>
   );
