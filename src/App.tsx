@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './lib/supabase';
 import { useStore } from './lib/store';
 import { initVision } from './lib/vision';
+import DashboardScreen from './screens/DashboardScreen';
 import HomeScreen from './screens/HomeScreen';
 import CreateLobbyScreen from './screens/CreateLobbyScreen';
 import JoinScreen from './screens/JoinScreen';
@@ -74,7 +75,8 @@ export default function App() {
   return (
     <div id="app">
       <Routes>
-        <Route path="/" element={<HomeScreen />} />
+        <Route path="/" element={<DashboardScreen />} />
+        <Route path="/snaphunt" element={<HomeScreen />} />
         <Route path="/create" element={<CreateLobbyScreen />} />
         <Route path="/join" element={<JoinScreen />} />
         <Route path="/join/:code" element={<JoinScreen />} />

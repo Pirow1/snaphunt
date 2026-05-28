@@ -40,7 +40,7 @@ export default function CreateLobbyScreen() {
         <button
           type="button"
           aria-label="Back"
-          onClick={() => go('/')}
+          onClick={() => go('/snaphunt')}
           className="flex h-[38px] w-[38px] items-center justify-center rounded-full border-[1.5px] border-gold/35 bg-forest-mid/60 font-display text-xl font-extrabold text-gold active:bg-gold active:text-forest-dark"
         >
           ←
