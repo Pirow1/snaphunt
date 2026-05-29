@@ -36,3 +36,5 @@ _smoke/.auth/
 *.sln
 *.sw?
 tsconfig.app.tsbuildinfo
+
+.vercel
