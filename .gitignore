@@ -17,8 +17,7 @@ dist-ssr
 .env.*
 !.env.example
 
-# Project-local Claude Code / MCP config (per-user, not source)
-.mcp.json
+# Agent skills symlinks (resolved from .agents/ below)
 .agents/
 
 # smoke-test artifacts (screenshots, etc.) — scripts in _smoke/ are tracked
