@@ -126,6 +126,18 @@ export type Database = {
         Args: { p_email?: string | null; p_phone?: string | null };
         Returns: UserProfile[];
       };
+      get_user_profile: {
+        Args: { p_id: string };
+        Returns: UserProfile[];
+      };
+      create_user_profile: {
+        Args: { p_name: string; p_emoji: string; p_email?: string | null; p_phone?: string | null; p_photo_url?: string | null };
+        Returns: UserProfile[];
+      };
+      update_user_profile: {
+        Args: { p_id: string; p_name?: string | null; p_emoji?: string | null; p_email?: string | null; p_phone?: string | null; p_photo_url?: string | null };
+        Returns: undefined;
+      };
     };
   };
 };
