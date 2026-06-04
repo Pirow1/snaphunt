@@ -17,7 +17,13 @@ Effort is rough dev-days assuming I implement and you test/decide.
 > ### 🚨 Critical discovery — Rush B gameplay was non-functional (now partly fixed)
 > When Rush B was merged (0017), its tables were prefixed `rb_*` and its create/join RPCs updated — but the **gameplay layer was never repointed**. It was reading/writing SnapHunt's `sessions`/`players`/`rounds`/`submissions` tables, so `startGame` failed outright (missing `planter_id`/`bomb_timer_seconds` columns) — Rush B never got past the lobby. The cloud-verify branch was triple-broken (wrong tables, body key `submissionId` vs `submission_id`, response `similarity` vs `cloud_similarity`).
 > - ✅ **Fixed:** repointed all gameplay queries (`store.ts`, `useSession.ts`, `GameRouter.tsx`) to `rb_*` tables. Type-validated. Rush B's local-match / local-miss branches now work (synced via the 3s poll fallback).
-> - ⏳ **Remaining for Rush B:** (a) extend the shared `verify-submission` edge function to handle Rush B (`game` param) for the gray-zone cloud branch — must not regress SnapHunt; (b) instant realtime: add broadcast triggers + `realtime.messages` RLS for `rb_*` (today it falls back to 3s polling); (c) on-device end-to-end test.
+> - ✅ **Cloud-verify fixed:** `verify-submission` edge function now serves both games via a `game` param (default `snaphunt`, unchanged); Rush B branch reads `rb_*`, skips finalize. Added a 40/user/hour cost guard. Deployed (v2) + routing-smoked. Rush B client invoke corrected.
+> - ⏳ **Remaining for Rush B:** instant realtime — broadcast triggers + `realtime.messages` RLS for `rb_*` (today it falls back to 3s polling); on-device end-to-end test.
+>
+> ### M2 — playable & installable (in progress)
+> - ✅ Real PWA icons generated from an on-brand gold compass-rose SVG (`public/icons/`, via `scripts/gen-icons.mjs` + `sharp`): 192/512/maskable + apple-touch.
+> - ✅ Manifest rebranded to "Potch Treasure Hunt" / "Potch"; theme + background set to dark forest `#0A1208` (was white/cream — wrong for a dark app). `index.html` theme-color + favicon + apple-touch-icon wired. Build-verified.
+> - ⏳ Remaining: branded first-load UX for the ~85 MB model on mobile data; **on-phone install + both-games smoke (needs your device)**.
 
 ---
 

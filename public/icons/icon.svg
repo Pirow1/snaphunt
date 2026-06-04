@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Potch Treasure Hunt">
+  <!-- Full-bleed dark forest background (safe for maskable) -->
+  <rect width="512" height="512" fill="#0A1208"/>
+  <!-- Outer compass ring -->
+  <circle cx="256" cy="256" r="196" fill="none" stroke="#C8A84B" stroke-width="4" opacity="0.45"/>
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#8A6010" stroke-width="2" opacity="0.5"/>
+  <!-- Diagonal (intercardinal) star, behind -->
+  <polygon points="360,152 286,226 360,360 286,286 152,360 226,286 152,152 226,226" fill="#C8A84B"/>
+  <!-- Cardinal star, on top -->
+  <polygon points="256,96 286,226 416,256 286,286 256,416 226,286 96,256 226,226" fill="#E0C060"/>
+  <!-- Center hub -->
+  <circle cx="256" cy="256" r="30" fill="#0A1208" stroke="#E0C060" stroke-width="5"/>
+  <circle cx="256" cy="256" r="9" fill="#E0C060"/>
+</svg>

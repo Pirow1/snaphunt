@@ -13,16 +13,20 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['icons/*'],
       manifest: {
-        name: 'SnapHunt',
-        short_name: 'SnapHunt',
-        description: 'Photographic hide-and-seek',
-        theme_color: '#F4E8D0',
-        background_color: '#F4E8D0',
+        name: 'Potch Treasure Hunt',
+        short_name: 'Potch',
+        description: 'Photographic hide-and-seek — SnapHunt & Rush B game modes',
+        theme_color: '#0A1208',
+        background_color: '#0A1208',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
         scope: '/',
-        icons: [],
+        icons: [
+          { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: 'icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
       },
       workbox: {
         runtimeCaching: [
