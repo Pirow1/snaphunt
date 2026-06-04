@@ -60,7 +60,7 @@ export default function HiderCaptureScreen() {
         right={<TopBarBadge>Hider</TopBarBadge>}
       />
 
-      <div className="flex flex-1 flex-col px-[22px] pt-3 pb-[22px]">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-[22px] pt-3 pb-[22px]">
         {/* Capture target with gold corner brackets */}
         <div
           className="relative mb-4 flex min-h-[280px] flex-1 items-center justify-center overflow-hidden rounded-[3px] border-[1.5px] border-dashed border-gold/40 bg-forest-mid/40"
@@ -131,7 +131,7 @@ export default function HiderCaptureScreen() {
           value={hint}
           onChange={(e) => setHint(e.target.value.slice(0, 200))}
           placeholder="Optional hint — leave a clue for the seekers..."
-          className="mb-3.5 w-full resize-none rounded-[3px] border-[1.5px] border-gold/25 bg-forest-mid/50 p-3.5 font-serif text-[14px] italic text-parchment placeholder:text-parchment/52 focus:border-gold focus:bg-forest-mid/70 focus:outline-none"
+          className="mb-3.5 w-full resize-none rounded-[3px] border-[1.5px] border-gold/25 bg-forest-mid p-3.5 font-serif text-[14px] italic text-parchment placeholder:text-parchment/52 focus:border-gold focus:bg-forest-rich focus:outline-none"
           data-testid="hint-input"
         />
 

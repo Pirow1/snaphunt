@@ -58,6 +58,9 @@ html, body {
   height: 100%;
   overscroll-behavior: none;
   font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+  /* Tell the UA our surfaces are dark so native controls, scrollbars and
+     date/select widgets stop defaulting to a light (white) chrome. */
+  color-scheme: dark;
 }
 
 body {
@@ -67,6 +70,30 @@ body {
   -webkit-font-smoothing: antialiased;
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* Form controls — strip the native (esp. iOS Safari) white background and
+   inner shadow so inputs/textareas inherit the dark theme instead of
+   rendering as white boxes. The Tailwind bg-* utility on each field then
+   shows through cleanly. */
+input, textarea, select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-clip: padding-box;
+  color: inherit;
+}
+
+/* Kill the Chrome/iOS autofill white/yellow fill — keep the dark field. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill {
+  -webkit-text-fill-color: var(--parchment);
+  -webkit-box-shadow: 0 0 0 1000px var(--forest-mid) inset;
+  box-shadow: 0 0 0 1000px var(--forest-mid) inset;
+  caret-color: var(--parchment);
+  transition: background-color 9999s ease-in-out 0s;
 }
 
 #root {

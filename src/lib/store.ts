@@ -460,9 +460,10 @@ export const useStore = create<AppState>()((set) => ({
 
     if (localSim >= s.local_match_threshold && withinRange) {
       const path = `${submissionId}.jpg`;
-      await supabase.storage
+      const { error: upErr } = await supabase.storage
         .from('submission-photos')
         .upload(path, compressed, { contentType: 'image/jpeg', upsert: true });
+      if (upErr) throw new Error(`upload failed: ${upErr.message}`);
       await supabase.from('submissions').update({
         photo_path: path,
         is_match: true,
@@ -488,9 +489,10 @@ export const useStore = create<AppState>()((set) => ({
     // Cloud-escalation branch. Upload photo; the edge function (Phase 3.1)
     // will read it via signed URL. For Phase 2.5 we STUB it inline.
     const path = `${submissionId}.jpg`;
-    await supabase.storage
+    const { error: upErr } = await supabase.storage
       .from('submission-photos')
       .upload(path, compressed, { contentType: 'image/jpeg', upsert: true });
+    if (upErr) throw new Error(`upload failed: ${upErr.message}`);
     await supabase.from('submissions').update({ photo_path: path }).eq('id', submissionId);
 
     // Pillar 3 — Claude tool use via verify-submission edge function.

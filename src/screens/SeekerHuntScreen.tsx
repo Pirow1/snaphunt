@@ -85,7 +85,7 @@ export default function SeekerHuntScreen() {
         right={<TopBarBadge tone="gold">Seeker</TopBarBadge>}
       />
 
-      <div className="flex flex-1 flex-col gap-3.5 px-[22px] pt-3 pb-[22px]">
+      <div className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto px-[22px] pt-3 pb-[22px]">
         <MiniLeaderboard />
         <TargetCard
           photoPath={round.photo_path}

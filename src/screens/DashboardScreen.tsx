@@ -297,7 +297,9 @@ export default function DashboardScreen() {
         {/* ── RUSH B ───────────────────────────────────────────── */}
         <button
           type="button"
-          onClick={() => go('/rushb')}
+          // Full navigation (not client-side) so App re-mounts and renders the
+          // Rush B sub-app OUTSIDE BrowserRouter — its MemoryRouter can't nest.
+          onClick={() => { window.location.href = '/rushb'; }}
           className="group relative overflow-hidden text-left transition-transform active:scale-[0.98] w-full"
           style={{ borderRadius: 4, border: `2px solid ${MAROON}` }}
         >

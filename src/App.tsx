@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './lib/supabase';
 import { useStore } from './lib/store';
 import { initVision } from './lib/vision';
@@ -24,19 +24,29 @@ export default function App() {
   const setVisionLoadProgress = useStore((s) => s.setVisionLoadProgress);
   const setVisionReady = useStore((s) => s.setVisionReady);
 
+  // Rush B is a self-contained sub-app with its own MemoryRouter, store, auth
+  // and vision bootstrap. It must render OUTSIDE this app's BrowserRouter
+  // (nested routers crash), so we branch on the path at the top level and let
+  // RushBApp own everything from there — including its own anon sign-in.
+  const isRushB = typeof window !== 'undefined' && window.location.pathname.startsWith('/rushb');
+
   // Pillar 1 pre-warm — kicks off the moment the app loads, regardless of
   // which route the user lands on (HomeScreen, /join deep link, /game refresh
-  // etc.). initVision is module-scope idempotent.
+  // etc.). initVision is module-scope idempotent. Skipped under Rush B, which
+  // pre-warms its own (separate) vision module.
   useEffect(() => {
+    if (isRushB) return;
     initVision((pct) => setVisionLoadProgress(pct))
       .then(() => setVisionReady(true))
       .catch((err) => console.error('[vision] init failed:', err));
-  }, [setVisionLoadProgress, setVisionReady]);
+  }, [isRushB, setVisionLoadProgress, setVisionReady]);
 
   useEffect(() => {
     // Bootstrap anon auth: reuse an existing session if one is cached in
     // localStorage; otherwise create a fresh anonymous user. Listen for any
-    // future auth events so the store stays in sync.
+    // future auth events so the store stays in sync. Skipped under Rush B,
+    // which runs its own identical bootstrap against its own store.
+    if (isRushB) return;
     let cancelled = false;
 
     (async () => {
@@ -71,14 +81,25 @@ export default function App() {
       cancelled = true;
       sub.subscription.unsubscribe();
     };
-  }, [setAuthUserId]);
+  }, [isRushB, setAuthUserId]);
+
+  // Rush B renders as its own tree, with no BrowserRouter ancestor. Exiting
+  // does a full navigation back to the dashboard so this App re-mounts into
+  // its BrowserRouter branch.
+  if (isRushB) {
+    return (
+      <div id="app">
+        <RushBApp onExit={() => { window.location.href = '/'; }} />
+      </div>
+    );
+  }
 
   return (
+    <BrowserRouter>
     <div id="app">
       <Routes>
         <Route path="/" element={<DashboardScreen />} />
         <Route path="/snaphunt" element={<HomeScreen />} />
-        <Route path="/rushb" element={<RushBApp onExit={() => window.history.back()} />} />
         <Route path="/create" element={<CreateLobbyScreen />} />
         <Route path="/join" element={<JoinScreen />} />
         <Route path="/join/:code" element={<JoinScreen />} />
@@ -95,5 +116,6 @@ export default function App() {
       </Routes>
       <ToastHost />
     </div>
+    </BrowserRouter>
   );
 }
