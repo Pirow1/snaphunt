@@ -13,6 +13,7 @@ export default function LobbyScreen() {
   const players = useStore((s) => s.players);
   const authUserId = useStore((s) => s.identity.authUserId);
   const startGame = useStore((s) => s.startGame);
+  const pushToast = useStore((s) => s.pushToast);
 
   const isHost = session?.host_id === authUserId;
   const canStart = players.length >= 2;
@@ -22,7 +23,7 @@ export default function LobbyScreen() {
       await startGame();
       navigate(`/game/${sessionId}`);
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Failed to start');
+      pushToast(e instanceof Error ? e.message : 'Failed to start', 'error');
     }
   }
 

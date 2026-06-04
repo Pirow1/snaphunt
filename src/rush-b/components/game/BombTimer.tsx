@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useCountdown } from '../../hooks/useCountdown';
 
 type BombTimerProps = {
@@ -11,10 +12,14 @@ export function BombTimer({ expiresAt, onExpired }: BombTimerProps) {
   const urgent = secondsLeft <= 30 && !isExpired;
   const critical = secondsLeft <= 10 && !isExpired;
 
-  // Notify parent once on expiry
-  if (isExpired && onExpired) {
-    // parent handles idempotency
-  }
+  // Fire onExpired exactly once when the countdown crosses zero.
+  const firedRef = useRef(false);
+  useEffect(() => {
+    if (isExpired && !firedRef.current) {
+      firedRef.current = true;
+      onExpired?.();
+    }
+  }, [isExpired, onExpired]);
 
   return (
     <div className={`relative overflow-hidden rounded-[2px] border-2 ${isExpired ? 'border-threat/40 bg-threat/5' : urgent ? 'border-threat bg-threat/10' : 'border-rim bg-surface'}`}>
