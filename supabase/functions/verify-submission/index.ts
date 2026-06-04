@@ -1,6 +1,13 @@
 // supabase/functions/verify-submission/index.ts
-// Pillar 3 — Claude tool use for guaranteed structured output.
-// Spec §10.2.
+// Pillar 3 — Claude tool use for guaranteed structured output. Spec §10.2.
+//
+// Serves BOTH games via the `game` body param (default 'snaphunt', so the
+// SnapHunt client's existing { submission_id } body is unchanged):
+//   * snaphunt — submissions/rounds tables, seeker/hider columns, submission-
+//     photos + round-photos buckets, finalize_round_winner on match.
+//   * rushb    — rb_submissions/rb_rounds, defuser/planter columns, round-photos
+//     for both photos, NO finalize (the defuse puzzle + rb_claim_round_defused
+//     decide the round; the edge function only records the vision verdict).
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import Anthropic from 'npm:@anthropic-ai/sdk@0.32.0';
@@ -12,6 +19,62 @@ const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY')!;
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY });
 
+// Cost guard: cap cloud verifications per user per hour so the Claude path
+// (which costs money) can't be hammered by a single anon client.
+const MAX_CLOUD_VERIFICATIONS_PER_HOUR = 40;
+
+type GameConfig = {
+  subTable: string;
+  roundTable: string;
+  roundLat: string;
+  roundLng: string;
+  subLat: string;
+  subLng: string;
+  subUser: string;
+  roundBucket: string;
+  subBucket: string;
+  sessionTable: string;
+  writeDecisionSource: boolean;
+  finalize: ((roundId: string, userId: string) => Promise<boolean>) | null;
+};
+
+const GAMES: Record<string, GameConfig> = {
+  snaphunt: {
+    subTable: 'submissions',
+    roundTable: 'rounds',
+    roundLat: 'hider_lat',
+    roundLng: 'hider_lng',
+    subLat: 'seeker_lat',
+    subLng: 'seeker_lng',
+    subUser: 'seeker_id',
+    roundBucket: 'round-photos',
+    subBucket: 'submission-photos',
+    sessionTable: 'sessions',
+    writeDecisionSource: true,
+    finalize: async (roundId, userId) => {
+      const { data } = await supabase.rpc('finalize_round_winner', {
+        p_round_id: roundId,
+        p_seeker_id: userId,
+      });
+      return !!data;
+    },
+  },
+  rushb: {
+    subTable: 'rb_submissions',
+    roundTable: 'rb_rounds',
+    roundLat: 'planter_lat',
+    roundLng: 'planter_lng',
+    subLat: 'defuser_lat',
+    subLng: 'defuser_lng',
+    subUser: 'defuser_id',
+    roundBucket: 'round-photos',
+    subBucket: 'round-photos',
+    sessionTable: 'rb_sessions',
+    writeDecisionSource: false,
+    finalize: null,
+  },
+};
+
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -20,7 +83,7 @@ const CORS = {
 
 const VERDICT_TOOL = {
   name: 'submit_verdict',
-  description: 'Record the verification verdict for a SnapHunt submission.',
+  description: 'Record the verification verdict for a submission.',
   input_schema: {
     type: 'object',
     properties: {
@@ -47,65 +110,61 @@ const VERDICT_TOOL = {
   },
 } as const;
 
-const SYSTEM_PROMPT = `You are the verification judge for SnapHunt, a photo-based hide-and-seek game.
+const SYSTEM_PROMPT = `You are the verification judge for a photo-based hide-and-seek game.
 You compare two photos and decide if they show THE SAME PHYSICAL OBJECT — not just the same type.
 Two red mugs in different rooms are NOT the same object. Two photos of the same statue from different angles ARE.
 Always call the submit_verdict tool with your decision. Never reply in plain text.`;
 
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...CORS, 'Content-Type': 'application/json' },
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
-  if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405, headers: CORS });
-  }
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: CORS });
 
-  const { submission_id } = await req.json();
-  if (!submission_id) {
-    return new Response(JSON.stringify({ error: 'submission_id required' }), {
-      status: 400,
-      headers: { ...CORS, 'Content-Type': 'application/json' },
-    });
-  }
+  const { submission_id, game = 'snaphunt' } = await req.json();
+  if (!submission_id) return json({ error: 'submission_id required' }, 400);
 
-  // 1. Load submission + round
+  const cfg = GAMES[game as string];
+  if (!cfg) return json({ error: `unknown game: ${game}` }, 400);
+
+  // 1. Load submission + its round (aliased to `round` so both games read the same way)
   const { data: submission, error: subErr } = await supabase
-    .from('submissions')
-    .select('*, rounds(*)')
+    .from(cfg.subTable)
+    .select(`*, round:${cfg.roundTable}(*)`)
     .eq('id', submission_id)
     .single();
-  if (subErr || !submission) {
-    return new Response(JSON.stringify({ error: 'Submission not found' }), {
-      status: 404,
-      headers: { ...CORS, 'Content-Type': 'application/json' },
-    });
-  }
-  const round = submission.rounds;
-  if (!round?.photo_path || !submission.photo_path) {
-    return new Response(JSON.stringify({ error: 'Missing photo paths' }), {
-      status: 400,
-      headers: { ...CORS, 'Content-Type': 'application/json' },
-    });
+  if (subErr || !submission) return json({ error: 'Submission not found' }, 404);
+
+  const round = submission.round;
+  if (!round?.photo_path || !submission.photo_path) return json({ error: 'Missing photo paths' }, 400);
+
+  // 1.5 Cost guard — per-user hourly cap on cloud verifications
+  const sinceIso = new Date(Date.now() - 3600_000).toISOString();
+  const { count } = await supabase
+    .from(cfg.subTable)
+    .select('id', { count: 'exact', head: true })
+    .eq(cfg.subUser, submission[cfg.subUser])
+    .gte('created_at', sinceIso);
+  if ((count ?? 0) > MAX_CLOUD_VERIFICATIONS_PER_HOUR) {
+    await supabase.from(cfg.subTable).update({ status: 'error' }).eq('id', submission_id);
+    return json({ error: 'Rate limit: too many verifications this hour' }, 429);
   }
 
   // 2. Haversine distance
-  const distance = haversine(
-    round.hider_lat,
-    round.hider_lng,
-    submission.seeker_lat,
-    submission.seeker_lng,
-  );
+  const distance = haversine(round[cfg.roundLat], round[cfg.roundLng], submission[cfg.subLat], submission[cfg.subLng]);
 
   // 3. Signed URLs (1h) for both photos
-  const { data: hiderUrl, error: hUrlErr } = await supabase.storage
-    .from('round-photos')
-    .createSignedUrl(round.photo_path, 3600);
-  const { data: seekerUrl, error: sUrlErr } = await supabase.storage
-    .from('submission-photos')
-    .createSignedUrl(submission.photo_path, 3600);
-  if (hUrlErr || sUrlErr || !hiderUrl?.signedUrl || !seekerUrl?.signedUrl) {
-    return new Response(JSON.stringify({ error: 'Could not sign photo URLs' }), {
-      status: 500,
-      headers: { ...CORS, 'Content-Type': 'application/json' },
-    });
+  const { data: roundUrl, error: rUrlErr } = await supabase.storage
+    .from(cfg.roundBucket).createSignedUrl(round.photo_path, 3600);
+  const { data: subUrl, error: sUrlErr } = await supabase.storage
+    .from(cfg.subBucket).createSignedUrl(submission.photo_path, 3600);
+  if (rUrlErr || sUrlErr || !roundUrl?.signedUrl || !subUrl?.signedUrl) {
+    return json({ error: 'Could not sign photo URLs' }, 500);
   }
 
   // 4. Claude vision + forced tool use
@@ -120,9 +179,9 @@ Deno.serve(async (req) => {
         role: 'user',
         content: [
           { type: 'text', text: 'Photo A (target object):' },
-          { type: 'image', source: { type: 'url', url: hiderUrl.signedUrl } },
-          { type: 'text', text: 'Photo B (seeker submission):' },
-          { type: 'image', source: { type: 'url', url: seekerUrl.signedUrl } },
+          { type: 'image', source: { type: 'url', url: roundUrl.signedUrl } },
+          { type: 'text', text: 'Photo B (submission):' },
+          { type: 'image', source: { type: 'url', url: subUrl.signedUrl } },
           { type: 'text', text: 'Compare and submit your verdict.' },
         ],
       },
@@ -132,84 +191,55 @@ Deno.serve(async (req) => {
   // 5. Extract verdict (schema guaranteed by tool_choice)
   const toolUse = response.content.find((b) => b.type === 'tool_use');
   if (!toolUse || toolUse.type !== 'tool_use') {
-    await supabase
-      .from('submissions')
-      .update({ status: 'error' })
-      .eq('id', submission_id);
-    return new Response(JSON.stringify({ error: 'AI response malformed' }), {
-      status: 502,
-      headers: { ...CORS, 'Content-Type': 'application/json' },
-    });
+    await supabase.from(cfg.subTable).update({ status: 'error' }).eq('id', submission_id);
+    return json({ error: 'AI response malformed' }, 502);
   }
-  const verdict = toolUse.input as {
-    similarity_score: number;
-    same_object: boolean;
-    reasoning: string;
-  };
+  const verdict = toolUse.input as { similarity_score: number; same_object: boolean; reasoning: string };
 
   // 6. Combine vision + location
-  const settings = await getSessionSettings(round.session_id);
+  const settings = await getSessionSettings(cfg.sessionTable, round.session_id);
   const withinRange = distance <= settings.location_tolerance_meters;
-  const isMatch =
-    verdict.same_object &&
-    verdict.similarity_score >= settings.final_match_threshold &&
-    withinRange;
+  const isMatch = verdict.same_object && verdict.similarity_score >= settings.final_match_threshold && withinRange;
 
   // 7. Persist verdict
-  await supabase
-    .from('submissions')
-    .update({
-      cloud_similarity: verdict.similarity_score,
-      cloud_reasoning: verdict.reasoning,
-      distance_meters: distance,
-      is_match: isMatch,
-      decision_source: 'cloud',
-      status: 'verified',
-      verified_at: new Date().toISOString(),
-    })
-    .eq('id', submission_id);
+  const update: Record<string, unknown> = {
+    cloud_similarity: verdict.similarity_score,
+    cloud_reasoning: verdict.reasoning,
+    distance_meters: distance,
+    is_match: isMatch,
+    status: 'verified',
+    verified_at: new Date().toISOString(),
+  };
+  if (cfg.writeDecisionSource) update.decision_source = 'cloud';
+  await supabase.from(cfg.subTable).update(update).eq('id', submission_id);
 
-  // 8. If match: atomic round-winner claim (only first match per round wins)
+  // 8. On match: SnapHunt claims the round winner atomically; Rush B leaves the
+  //    round open for the defuse puzzle to resolve.
   let roundWinner = false;
-  if (isMatch) {
-    const { data: finalized } = await supabase.rpc('finalize_round_winner', {
-      p_round_id: round.id,
-      p_seeker_id: submission.seeker_id,
-    });
-    roundWinner = !!finalized;
+  if (isMatch && cfg.finalize) {
+    roundWinner = await cfg.finalize(round.id, submission[cfg.subUser]);
   }
 
-  return new Response(
-    JSON.stringify({
-      submission_id,
-      cloud_similarity: verdict.similarity_score,
-      is_match: isMatch,
-      distance_meters: distance,
-      cloud_reasoning: verdict.reasoning,
-      round_winner: roundWinner,
-    }),
-    { headers: { ...CORS, 'Content-Type': 'application/json' } },
-  );
+  return json({
+    submission_id,
+    similarity: verdict.similarity_score, // alias for clients that read `similarity`
+    cloud_similarity: verdict.similarity_score,
+    is_match: isMatch,
+    distance_meters: distance,
+    cloud_reasoning: verdict.reasoning,
+    round_winner: roundWinner,
+  });
 });
 
 function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {
   const toRad = (d: number) => (d * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
   const dLng = toRad(lng2 - lng1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
   return 2 * 6371000 * Math.asin(Math.sqrt(a));
 }
 
-async function getSessionSettings(sessionId: string) {
-  const { data } = await supabase
-    .from('sessions')
-    .select('settings')
-    .eq('id', sessionId)
-    .single();
-  return data!.settings as {
-    location_tolerance_meters: number;
-    final_match_threshold: number;
-  };
+async function getSessionSettings(sessionTable: string, sessionId: string) {
+  const { data } = await supabase.from(sessionTable).select('settings').eq('id', sessionId).single();
+  return data!.settings as { location_tolerance_meters: number; final_match_threshold: number };
 }

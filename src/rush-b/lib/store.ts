@@ -296,18 +296,12 @@ export const useStore: UseBoundStore<StoreApi<AppState>> = create<AppState>()((s
     });
     if (error) throw error;
 
-    const { data: fnData, error: fnErr } = await supabase.functions.invoke('verify-submission', {
-      body: { submissionId, roundId: currentRound.id },
+    // The edge function owns the verdict write (records cloud_similarity /
+    // is_match / status on rb_submissions); we just wait for it.
+    const { error: fnErr } = await supabase.functions.invoke('verify-submission', {
+      body: { submission_id: submissionId, game: 'rushb' },
     });
     if (fnErr) throw fnErr;
-    const result = fnData as { is_match: boolean; similarity: number };
-
-    await supabase.from('rb_submissions').update({
-      is_match: result.is_match,
-      cloud_similarity: result.similarity,
-      status: 'verified',
-      verified_at: new Date().toISOString(),
-    }).eq('id', submissionId);
 
     set({ currentSubmissionId: submissionId });
     return { branch: 'cloud', submissionId, localSimilarity: localSim, distanceMeters: distM };
