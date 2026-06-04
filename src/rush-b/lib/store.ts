@@ -144,13 +144,13 @@ export const useStore: UseBoundStore<StoreApi<AppState>> = create<AppState>()((s
 
     const planter = players[Math.floor(Math.random() * players.length)]!;
     const roundId = crypto.randomUUID();
-    const { error: rErr } = await supabase.from('rounds').insert({
+    const { error: rErr } = await supabase.from('rb_rounds').insert({
       id: roundId, session_id: session.id, round_number: 1,
       planter_id: planter.id, status: 'pending', bomb_timer_seconds: 300,
     });
     if (rErr) throw rErr;
 
-    const { error: sErr } = await supabase.from('sessions')
+    const { error: sErr } = await supabase.from('rb_sessions')
       .update({ status: 'playing', current_round_id: roundId }).eq('id', session.id);
     if (sErr) throw sErr;
 
@@ -180,7 +180,7 @@ export const useStore: UseBoundStore<StoreApi<AppState>> = create<AppState>()((s
     if (!session || !identity.authUserId) return;
     if (session.host_id !== identity.authUserId) return;
     if (session.status === 'finished') return;
-    const { error } = await supabase.from('sessions')
+    const { error } = await supabase.from('rb_sessions')
       .update({ status: 'finished', finished_at: new Date().toISOString() }).eq('id', session.id);
     if (error) throw error;
   },
@@ -211,7 +211,7 @@ export const useStore: UseBoundStore<StoreApi<AppState>> = create<AppState>()((s
     const startedAt = new Date();
     const expiresAt = new Date(startedAt.getTime() + bombTimerSeconds * 1000);
 
-    const { error: rErr } = await supabase.from('rounds').update({
+    const { error: rErr } = await supabase.from('rb_rounds').update({
       photo_path: path,
       photo_embedding: serializeEmbedding(embedding),
       bomb_timer_seconds: bombTimerSeconds,
@@ -269,7 +269,7 @@ export const useStore: UseBoundStore<StoreApi<AppState>> = create<AppState>()((s
     if (localSim >= s.local_match_threshold && withinRange) {
       const path = `submissions/${submissionId}.jpg`;
       await supabase.storage.from('round-photos').upload(path, compressed, { contentType: 'image/jpeg', upsert: true });
-      const { error } = await supabase.from('submissions').insert({
+      const { error } = await supabase.from('rb_submissions').insert({
         ...baseRow, photo_path: path, is_match: true, status: 'verified',
         verified_at: new Date().toISOString(),
       });
@@ -279,7 +279,7 @@ export const useStore: UseBoundStore<StoreApi<AppState>> = create<AppState>()((s
     }
 
     if (localSim < s.local_reject_threshold || !withinRange) {
-      const { error } = await supabase.from('submissions').insert({
+      const { error } = await supabase.from('rb_submissions').insert({
         ...baseRow, is_match: false, status: 'verified',
         verified_at: new Date().toISOString(),
       });
@@ -291,7 +291,7 @@ export const useStore: UseBoundStore<StoreApi<AppState>> = create<AppState>()((s
     // Cloud verify
     const path = `submissions/${submissionId}.jpg`;
     await supabase.storage.from('round-photos').upload(path, compressed, { contentType: 'image/jpeg', upsert: true });
-    const { error } = await supabase.from('submissions').insert({
+    const { error } = await supabase.from('rb_submissions').insert({
       ...baseRow, photo_path: path, status: 'pending',
     });
     if (error) throw error;
@@ -302,7 +302,7 @@ export const useStore: UseBoundStore<StoreApi<AppState>> = create<AppState>()((s
     if (fnErr) throw fnErr;
     const result = fnData as { is_match: boolean; similarity: number };
 
-    await supabase.from('submissions').update({
+    await supabase.from('rb_submissions').update({
       is_match: result.is_match,
       cloud_similarity: result.similarity,
       status: 'verified',

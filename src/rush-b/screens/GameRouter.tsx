@@ -99,7 +99,7 @@ export default function GameRouter() {
     let cancelled = false;
     let timer: number | null = null;
     const tick = async () => {
-      const { data } = await supabase.from('submissions').select('*').eq('id', submissionId).maybeSingle();
+      const { data } = await supabase.from('rb_submissions').select('*').eq('id', submissionId).maybeSingle();
       if (cancelled) return;
       setSubmission(data as Submission | null);
       if (data?.status !== 'verified') timer = window.setTimeout(tick, 400);

@@ -6,7 +6,7 @@ import type { Player, Round, Session, Submission } from '../lib/types';
 
 type BroadcastPayload = {
   eventType: 'INSERT' | 'UPDATE' | 'DELETE';
-  table: 'players' | 'rounds' | 'sessions' | 'submissions';
+  table: 'rb_players' | 'rb_rounds' | 'rb_sessions' | 'rb_submissions';
   new: Record<string, unknown> | null;
   old: Record<string, unknown> | null;
 };
@@ -29,9 +29,9 @@ export function useSession(sessionId: string | null): void {
     async function snapshot() {
       if (cancelled || !sessionId) return;
       const [{ data: sessionRow }, { data: playerRows }, { data: roundRows }] = await Promise.all([
-        supabase.from('sessions').select('*').eq('id', sessionId).maybeSingle(),
-        supabase.from('players').select('*').eq('session_id', sessionId).order('joined_at'),
-        supabase.from('rounds').select('*').eq('session_id', sessionId)
+        supabase.from('rb_sessions').select('*').eq('id', sessionId).maybeSingle(),
+        supabase.from('rb_players').select('*').eq('session_id', sessionId).order('joined_at'),
+        supabase.from('rb_rounds').select('*').eq('session_id', sessionId)
           .order('round_number', { ascending: false }).limit(1),
       ]);
       if (cancelled) return;
@@ -67,10 +67,10 @@ export function useSession(sessionId: string | null): void {
 
       channel
         .on('broadcast', { event: 'db_change' }, ({ payload }: { payload: BroadcastPayload }) => {
-          if (payload.table === 'sessions' && payload.new) setSession(payload.new as Session);
-          if (payload.table === 'players') applyPlayers(payload);
-          if (payload.table === 'rounds' && payload.new) setCurrentRound(payload.new as Round);
-          if (payload.table === 'submissions' && payload.new) upsertSubmission(payload.new as Submission);
+          if (payload.table === 'rb_sessions' && payload.new) setSession(payload.new as Session);
+          if (payload.table === 'rb_players') applyPlayers(payload);
+          if (payload.table === 'rb_rounds' && payload.new) setCurrentRound(payload.new as Round);
+          if (payload.table === 'rb_submissions' && payload.new) upsertSubmission(payload.new as Submission);
         })
         .subscribe();
 

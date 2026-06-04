@@ -12,6 +12,12 @@ Effort is rough dev-days assuming I implement and you test/decide.
 > - **M0 decisions taken** (defaults, all reversible): brand = "Potch Treasure Hunt" umbrella with SnapHunt/Rush B as modes; design = shared shell + per-game palettes; email/phone = keep but lock down.
 > - **M1 in progress.** ✅ user_profiles PII leak closed (migration `0021`: table locked, owner-scoped SECURITY DEFINER RPCs, lookup leaks no contact, photo writes scoped to owner folder). Verified against prod. ⏳ Remaining: tighten `WITH CHECK (true)` session INSERT policies; cost/abuse guard on `verify-submission`; document anon sign-in posture.
 > - ⚠️ **Deploy coupling:** `0021` locks the table, so the OLD deployed frontend's direct-table profile calls break until the new RPC-based frontend deploys. Push `main` to redeploy.
+> - ✅ **M1 session policies** (migration `0022`): tightened `WITH CHECK (true)` INSERT on `sessions`/`rb_sessions` to `host_id = auth.uid()`. Applied to prod.
+>
+> ### 🚨 Critical discovery — Rush B gameplay was non-functional (now partly fixed)
+> When Rush B was merged (0017), its tables were prefixed `rb_*` and its create/join RPCs updated — but the **gameplay layer was never repointed**. It was reading/writing SnapHunt's `sessions`/`players`/`rounds`/`submissions` tables, so `startGame` failed outright (missing `planter_id`/`bomb_timer_seconds` columns) — Rush B never got past the lobby. The cloud-verify branch was triple-broken (wrong tables, body key `submissionId` vs `submission_id`, response `similarity` vs `cloud_similarity`).
+> - ✅ **Fixed:** repointed all gameplay queries (`store.ts`, `useSession.ts`, `GameRouter.tsx`) to `rb_*` tables. Type-validated. Rush B's local-match / local-miss branches now work (synced via the 3s poll fallback).
+> - ⏳ **Remaining for Rush B:** (a) extend the shared `verify-submission` edge function to handle Rush B (`game` param) for the gray-zone cloud branch — must not regress SnapHunt; (b) instant realtime: add broadcast triggers + `realtime.messages` RLS for `rb_*` (today it falls back to 3s polling); (c) on-device end-to-end test.
 
 ---
 
