@@ -1,10 +1,10 @@
-import { create } from 'zustand';
+import { create, type StoreApi, type UseBoundStore } from 'zustand';
 import { supabase } from './supabase';
 import { generateJoinCode } from './codes';
 import { compressedPhoto } from './camera';
 import { encodeImage } from './vision';
 import { cosine, deserializeEmbedding, serializeEmbedding } from './embeddings';
-import { getCurrentCoords, haversine } from './geolocation';
+import { getCurrentCoords, haversine, type GeoCoords } from './geolocation';
 import { DEFAULT_SESSION_SETTINGS, type Difficulty, type Player, type Round, type Session, type SessionStatus, type Submission } from './types';
 
 const POINTS_BY_DIFFICULTY: Record<Difficulty, number> = {
@@ -29,7 +29,7 @@ export type Identity = {
   photoUrl: string | null;
 };
 
-export type GeoCoords = { lat: number; lng: number; accuracy?: number };
+export type { GeoCoords };
 
 export type Toast = {
   id: number;
@@ -109,7 +109,7 @@ export type AppState = {
 
 let toastSeq = 0;
 
-export const useStore = create<AppState>()((set) => ({
+export const useStore: UseBoundStore<StoreApi<AppState>> = create<AppState>()((set) => ({
   identity: { authUserId: null, name: '', emoji: '🦊', userProfileId: null, photoUrl: null },
   setAuthUserId: (id) =>
     set((s) => ({ identity: { ...s.identity, authUserId: id } })),
@@ -179,6 +179,7 @@ export const useStore = create<AppState>()((set) => ({
           is_host: true,
           joined_at: now,
           last_seen_at: now,
+          user_profile_id: userProfileId ?? null,
         },
       ],
     }));

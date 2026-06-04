@@ -43,13 +43,16 @@ export function MultiChoicePuzzle({ puzzle, onSolve, onFail }: Props) {
     default: 'border-gold/35 bg-forest-mid/50 text-parchment active:bg-gold/15',
   };
 
+  // Narrow the visual union once so .count/.emoji are safe inside callbacks.
+  const flashVisual = puzzle.visual?.type === 'flash' ? puzzle.visual : null;
+
   return (
     <div className="flex flex-col items-center gap-4">
       {/* Flash phase: display emoji grid */}
-      {puzzle.visual?.type === 'flash' && showFlash && (
+      {flashVisual && showFlash && (
         <div className="flex flex-wrap justify-center gap-2 rounded-[4px] border border-gold/20 bg-forest-mid/60 p-4">
-          {Array.from({ length: puzzle.visual.count }, (_, i) => (
-            <span key={i} className="text-3xl">{puzzle.visual!.emoji}</span>
+          {Array.from({ length: flashVisual.count }, (_, i) => (
+            <span key={i} className="text-3xl">{flashVisual.emoji}</span>
           ))}
         </div>
       )}

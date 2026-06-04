@@ -109,7 +109,7 @@ export const useStore: UseBoundStore<StoreApi<AppState>> = create<AppState>()((s
         current_round_id: null, settings: { ...DEFAULT_SESSION_SETTINGS },
         created_at: now, finished_at: null,
       },
-      players: [{ id: userId, session_id: sessionId, name: trimmedName, emoji, score: 0, is_host: true, joined_at: now, last_seen_at: now }],
+      players: [{ id: userId, session_id: sessionId, name: trimmedName, emoji, score: 0, is_host: true, joined_at: now, last_seen_at: now, user_profile_id: userProfileId ?? null }],
     }));
     return { sessionId, code };
   },

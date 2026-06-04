@@ -24,6 +24,11 @@ Effort is rough dev-days assuming I implement and you test/decide.
 > - ✅ Real PWA icons generated from an on-brand gold compass-rose SVG (`public/icons/`, via `scripts/gen-icons.mjs` + `sharp`): 192/512/maskable + apple-touch.
 > - ✅ Manifest rebranded to "Potch Treasure Hunt" / "Potch"; theme + background set to dark forest `#0A1208` (was white/cream — wrong for a dark app). `index.html` theme-color + favicon + apple-touch-icon wired. Build-verified.
 > - ⏳ Remaining: branded first-load UX for the ~85 MB model on mobile data; **on-phone install + both-games smoke (needs your device)**.
+>
+> ### M4 — code health (in progress)
+> - ✅ Minor UX: Rush B `alert()` → toast; `BombTimer.onExpired` now actually fires (was a no-op, so the defuser never saw detonation); removed dead `_Placeholder.tsx`.
+> - ✅ **Strict build restored.** Discovered `npm run typecheck` (`tsc --noEmit`) was a **no-op** (solution-style root tsconfig checks nothing); the real `tsc -b` had **136 errors**. Root cause was a `useStore` circular-inference collapsing the store to `any`; fixed via an explicit `UseBoundStore<StoreApi<AppState>>` annotation, then the `Database` type (missing `Relationships`/`Views` + several RPC declarations), a `GeoCoords` type duplication, a puzzle union-narrowing bug, and `data-testid` typing. Now **0 errors**. `typecheck` → `tsc -b`, `build` → `tsc -b && vite build` (real gate).
+> - ⏳ Remaining M4: de-duplicate Rush B's 5 forked lib modules.
 
 ---
 

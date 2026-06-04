@@ -36,12 +36,13 @@ export default function RoundResultScreen() {
   useEffect(() => {
     let cancelled = false;
     if (!round?.id || !round.winner_id) { setWinningSubmission(null); return; }
+    const winnerId = round.winner_id;
     (async () => {
       const { data } = await supabase
         .from('submissions')
         .select('*')
         .eq('round_id', round.id)
-        .eq('seeker_id', round.winner_id)
+        .eq('seeker_id', winnerId)
         .eq('is_match', true)
         .order('created_at', { ascending: false })
         .limit(1)

@@ -7,7 +7,7 @@ type PhotoCaptureProps = {
   /** Accessible label for the trigger button. */
   ariaLabel?: string;
   /** Forwarded to the trigger button. Class merges with the default. */
-  buttonProps?: Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick' | 'children' | 'type'>;
+  buttonProps?: Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick' | 'children' | 'type'> & { 'data-testid'?: string };
 };
 
 /**

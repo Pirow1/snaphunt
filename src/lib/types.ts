@@ -107,12 +107,13 @@ export type UserProfile = {
 export type Database = {
   public: {
     Tables: {
-      sessions:      { Row: Session;     Insert: Partial<Session>     & Pick<Session,     'code' | 'host_id'>; Update: Partial<Session> };
-      players:       { Row: Player;      Insert: Partial<Player>      & Pick<Player,      'id' | 'session_id' | 'name'>; Update: Partial<Player> };
-      rounds:        { Row: Round;       Insert: Partial<Round>       & Pick<Round,       'session_id' | 'round_number' | 'hider_id'>; Update: Partial<Round> };
-      submissions:   { Row: Submission;  Insert: Partial<Submission>  & Pick<Submission,  'round_id' | 'seeker_id' | 'seeker_lat' | 'seeker_lng'>; Update: Partial<Submission> };
-      user_profiles: { Row: UserProfile; Insert: Partial<UserProfile> & Pick<UserProfile, 'name'>; Update: Partial<UserProfile> };
+      sessions:      { Row: Session;     Insert: Partial<Session>     & Pick<Session,     'code' | 'host_id'>; Update: Partial<Session>;     Relationships: [] };
+      players:       { Row: Player;      Insert: Partial<Player>      & Pick<Player,      'id' | 'session_id' | 'name'>; Update: Partial<Player>;      Relationships: [] };
+      rounds:        { Row: Round;       Insert: Partial<Round>       & Pick<Round,       'session_id' | 'round_number' | 'hider_id'>; Update: Partial<Round>;       Relationships: [] };
+      submissions:   { Row: Submission;  Insert: Partial<Submission>  & Pick<Submission,  'round_id' | 'seeker_id' | 'seeker_lat' | 'seeker_lng'>; Update: Partial<Submission>;  Relationships: [] };
+      user_profiles: { Row: UserProfile; Insert: Partial<UserProfile> & Pick<UserProfile, 'name'>; Update: Partial<UserProfile>; Relationships: [] };
     };
+    Views: Record<string, never>;
     Functions: {
       create_session_with_host: {
         Args: { p_session_id: string; p_code: string; p_name: string; p_emoji: string; p_user_profile_id?: string | null };
@@ -121,6 +122,18 @@ export type Database = {
       join_session_by_code: {
         Args: { p_code: string; p_name: string; p_emoji: string; p_user_profile_id?: string | null };
         Returns: Session;
+      };
+      start_next_round: {
+        Args: { p_session_id: string; p_hider_id: string; p_round_number: number };
+        Returns: Round;
+      };
+      expire_round_no_winner: {
+        Args: { p_round_id: string };
+        Returns: Round;
+      };
+      claim_round_match: {
+        Args: { p_round_id: string };
+        Returns: boolean;
       };
       find_user_by_contact: {
         Args: { p_email?: string | null; p_phone?: string | null };

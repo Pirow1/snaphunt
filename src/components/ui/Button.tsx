@@ -6,6 +6,7 @@ type Variant = 'primary' | 'dark' | 'gold' | 'ghost';
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: Variant;
   children: ReactNode;
+  'data-testid'?: string;
 };
 
 const VARIANT_CLASS: Record<Variant, string> = {

@@ -54,7 +54,7 @@ function rng(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function pick<T>(arr: T[]): T {
+function pick<T>(arr: readonly T[]): T {
   return arr[rng(0, arr.length - 1)];
 }
 
