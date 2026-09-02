@@ -37,3 +37,7 @@ _smoke/.auth/
 tsconfig.app.tsbuildinfo
 
 .vercel
+
+# local smoke-test artifacts
+.pchk/
+prod-check.mjs
